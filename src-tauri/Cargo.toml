@@ -1,0 +1,23 @@
+[package]
+name = "poker-postflop-solver"
+version = "0.1.0"
+edition = "2021"
+description = "Postflop solver with manual input"
+
+[lib]
+name = "poker_postflop_solver_lib"
+crate-type = ["cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri      = { version = "2", features = [] }
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+log        = "0.4"
+equity-engine = { path = "../../equity-engine" }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+default         = ["custom-protocol"]
