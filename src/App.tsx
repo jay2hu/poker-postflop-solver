@@ -5,6 +5,9 @@ import { CardPicker, SUIT_SYMBOLS, SUIT_COLORS } from './components/CardPicker';
 import { EquityBar, ActionBadge, RangeSelector, BoardDisplay } from './components/SolverComponents';
 import { useSolverStore } from './store/solverStore';
 import './index.css';
+import { RangeGrid } from './components/RangeGrid';
+import { EquityDistribution } from './components/EquityDistribution';
+import { BetSizeComparison } from './components/BetSizeComparison';
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <div style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>{children}</div>
@@ -31,11 +34,14 @@ const App = () => {
   const {
     heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRange,
     result, loading, error,
+    rangeAnalysis, rangeLoading, betSizes, betSizesLoading,
     setHeroHand, setBoard, setPotBb, setHeroStackBb, setVillainStackBb, setToCallBb,
     setIsIp, setVillainRange, solve, reset,
   } = useSolverStore();
 
   const [showHeroPicker, setShowHeroPicker] = useState(false);
+  const [rangeExpanded, setRangeExpanded] = useState(true);
+  const [betSizesExpanded, setBetSizesExpanded] = useState(true);
   const [showBoardPicker, setShowBoardPicker] = useState(false);
 
   const allUsedCards = [...heroHand, ...board];
@@ -227,6 +233,32 @@ const App = () => {
                   {result.reasoning}
                 </div>
               </div>
+
+              {/* Range Analysis */}
+              {(rangeAnalysis || rangeLoading) && (
+                <div>
+                  <button onClick={() => setRangeExpanded(v => !v)} style={{ background:'none',border:'none',cursor:'pointer',padding:0,display:'flex',alignItems:'center',gap:4,marginBottom:8 }}>
+                    <span style={{ fontSize:10,color:'#6b7280',textTransform:'uppercase',letterSpacing:1 }}>{rangeExpanded?'▾':'▸'} Range Analysis</span>
+                  </button>
+                  {rangeExpanded && (
+                    <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
+                      <RangeGrid hands={rangeAnalysis?.hands??[]} loading={rangeLoading} />
+                      {rangeAnalysis && <EquityDistribution buckets={rangeAnalysis.buckets} heroAvgEquity={rangeAnalysis.hero_avg_equity} villainAvgEquity={rangeAnalysis.villain_avg_equity} nutAdvantage={rangeAnalysis.nut_advantage} />}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Bet Size Comparison */}
+              {(betSizes || betSizesLoading) && (
+                <div>
+                  <button onClick={() => setBetSizesExpanded(v => !v)} style={{ background:'none',border:'none',cursor:'pointer',padding:0,display:'flex',alignItems:'center',gap:4,marginBottom:8 }}>
+                    <span style={{ fontSize:10,color:'#6b7280',textTransform:'uppercase',letterSpacing:1 }}>{betSizesExpanded?'▾':'▸'} Bet Size Comparison</span>
+                  </button>
+                  {betSizesExpanded && betSizesLoading && <div style={{fontSize:12,color:'#6b7280'}}>⏳ Calculating bet sizes…</div>}
+                  {betSizesExpanded && betSizes && <BetSizeComparison options={betSizes.options} recommended_idx={betSizes.recommended_idx} pot_bb={betSizes.pot_bb} />}
+                </div>
+              )}
             </div>
           )}
         </div>
