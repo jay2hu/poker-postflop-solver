@@ -124,7 +124,7 @@ export const useSolverStore = create<Store>((set, get) => ({
           : (async () => { await new Promise(r => setTimeout(r, 400)); return mockRangeAnalysis(board, heroHand); })(),
         IS_TAURI
           ? import('@tauri-apps/api/core').then(({ invoke }) =>
-              invoke<BetSizeAnalysis>('compare_bet_sizes', { heroHand, board, potBb, heroStackBb, villainRangeStr: villainRange }))
+              invoke<BetSizeAnalysis>('compare_bet_sizes', { heroHand, board, potBb, heroStackBb, villainStackBb, villainRangeStr: villainRange }))
           : (async () => { await new Promise(r => setTimeout(r, 300)); return mockBetSizes(potBb); })(),
       ]);
       set({ rangeAnalysis, betSizes, rangeLoading: false, betSizesLoading: false });
