@@ -1,94 +1,35 @@
 import { create } from 'zustand';
-import type { PostflopResult } from '../types';
+import type { SolverState, PostflopResult } from '../types/solver';
 
-// Detect Tauri environment
-const isTauri = () => typeof window !== 'undefined' && '__TAURI__' in window;
+const IS_TAURI = '__TAURI_INTERNALS__' in window;
 
-function mockSolve(params: {
-  hero_hand: string[];
-  board: string[];
-  pot_bb: number;
-  hero_stack_bb: number;
-  villain_stack_bb: number;
-  to_call_bb: number;
-  is_ip: boolean;
-  villain_range: string;
-}): PostflopResult {
-  const suits = params.board.map((c) => c[1]);
-  const is_monotone = suits.length >= 3 && suits.every((s) => s === suits[0]);
-  const ranks = params.board.map((c) => c[0]);
-  const rankCounts = ranks.reduce<Record<string, number>>((acc, r) => {
-    acc[r] = (acc[r] || 0) + 1;
-    return acc;
-  }, {});
-  const is_paired = Object.values(rankCounts).some((v) => v >= 2);
-  const rankOrder = 'AKQJT98765432';
-  const rankNums = ranks.map((r) => rankOrder.indexOf(r));
-  rankNums.sort((a, b) => a - b);
-  let has_straight_draw = false;
-  for (let i = 0; i < rankNums.length - 1; i++) {
-    if (Math.abs(rankNums[i] - rankNums[i + 1]) <= 2) has_straight_draw = true;
-  }
-  const suitCounts = suits.reduce<Record<string, number>>((acc, s) => {
-    acc[s] = (acc[s] || 0) + 1;
-    return acc;
-  }, {});
-  const has_flush_draw = Object.values(suitCounts).some((v) => v >= 2);
-
-  const parts = [
-    is_monotone ? 'Monotone' : '',
-    is_paired ? 'Paired' : '',
-    has_straight_draw ? 'Straight Draw' : '',
-    has_flush_draw && !is_monotone ? 'Flush Draw' : '',
-  ].filter(Boolean);
-  const texture_label = parts.length ? parts.join(', ') : 'Dry';
-
-  const equity = 55 + Math.random() * 20;
-  const spr = params.hero_stack_bb / params.pot_bb;
-  const pot_odds = params.to_call_bb > 0 ? params.to_call_bb / (params.pot_bb + params.to_call_bb) : 0;
-
-  let action = 'BET';
-  if (params.to_call_bb > 0) {
-    action = equity > 40 ? 'CALL' : 'FOLD';
-  } else if (equity < 45) {
-    action = 'CHECK';
-  }
-
-  const sizing_bb = action === 'BET' ? Math.round(params.pot_bb * 0.66 * 10) / 10 : null;
-  const sizing_pct_pot = action === 'BET' ? 66 : null;
-
+/** Deterministic mock solve */
+function mockSolve(potBb: number, heroStackBb: number, toCallBb: number, board: string[]): PostflopResult {
+  const equity = 0.5 + (board.length * 0.032) % 0.3;
+  const spr = heroStackBb / Math.max(potBb, 1);
+  const potOdds = toCallBb > 0 ? toCallBb / (potBb + toCallBb) : 0;
+  const action = equity > 0.6 ? 'bet' : equity > 0.45 ? 'call' : 'fold';
+  const sizingPct = action === 'bet' ? 65 : null;
+  const sizingBb = sizingPct ? parseFloat((potBb * sizingPct / 100).toFixed(1)) : null;
   return {
-    equity: Math.round(equity * 10) / 10,
-    pot_odds: Math.round(pot_odds * 1000) / 10,
-    spr: Math.round(spr * 10) / 10,
+    equity: parseFloat(equity.toFixed(3)),
     action,
-    sizing_bb,
-    sizing_pct_pot,
-    ev_estimate: Math.round((equity / 100 - 0.5) * params.pot_bb * 10) / 10,
-    reasoning: `With ${equity.toFixed(1)}% equity on a ${texture_label.toLowerCase()} board, ${action.toLowerCase()} is recommended. SPR of ${spr.toFixed(1)} suggests ${spr < 3 ? 'shallow stack play' : 'deep stack considerations'}.`,
-    board_texture: {
-      is_monotone,
-      is_paired,
-      has_straight_draw,
-      has_flush_draw,
-      texture_label,
-    },
+    sizing_bb: sizingBb,
+    sizing_pct_pot: sizingPct,
+    pot_odds: parseFloat(potOdds.toFixed(3)),
+    spr: parseFloat(spr.toFixed(1)),
+    reasoning: action === 'bet'
+      ? 'Strong equity position. Bet for value and protection.'
+      : action === 'call'
+      ? 'Marginal equity — calling is correct given pot odds.'
+      : 'Insufficient equity against villain range.',
+    board_texture: board.length >= 3
+      ? (new Set(board.map(c => c.slice(-1))).size === 1 ? 'Monotone' : 'Dry')
+      : '—',
   };
 }
 
-interface SolverState {
-  heroHand: string[];
-  board: string[];
-  potBb: number;
-  heroStackBb: number;
-  villainStackBb: number;
-  toCallBb: number;
-  isIp: boolean;
-  villainRange: string;
-  result: PostflopResult | null;
-  loading: boolean;
-  error: string | null;
-
+interface Store extends SolverState {
   setHeroHand: (cards: string[]) => void;
   setBoard: (cards: string[]) => void;
   setPotBb: (v: number) => void;
@@ -101,7 +42,7 @@ interface SolverState {
   reset: () => void;
 }
 
-export const useSolverStore = create<SolverState>((set, get) => ({
+const INITIAL: SolverState = {
   heroHand: [],
   board: [],
   potBb: 10,
@@ -109,60 +50,47 @@ export const useSolverStore = create<SolverState>((set, get) => ({
   villainStackBb: 100,
   toCallBb: 0,
   isIp: true,
-  villainRange: 'top20%',
+  villainRange: 'top15%',
   result: null,
   loading: false,
   error: null,
+};
 
-  setHeroHand: (cards) => set({ heroHand: cards }),
-  setBoard: (cards) => set({ board: cards }),
-  setPotBb: (v) => set({ potBb: v }),
-  setHeroStackBb: (v) => set({ heroStackBb: v }),
-  setVillainStackBb: (v) => set({ villainStackBb: v }),
-  setToCallBb: (v) => set({ toCallBb: v }),
-  setIsIp: (v) => set({ isIp: v }),
-  setVillainRange: (v) => set({ villainRange: v }),
+export const useSolverStore = create<Store>((set, get) => ({
+  ...INITIAL,
+  setHeroHand: (heroHand) => set({ heroHand }),
+  setBoard: (board) => set({ board }),
+  setPotBb: (potBb) => set({ potBb }),
+  setHeroStackBb: (heroStackBb) => set({ heroStackBb }),
+  setVillainStackBb: (villainStackBb) => set({ villainStackBb }),
+  setToCallBb: (toCallBb) => set({ toCallBb }),
+  setIsIp: (isIp) => set({ isIp }),
+  setVillainRange: (villainRange) => set({ villainRange }),
 
   solve: async () => {
-    const s = get();
+    const { heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRange } = get();
+    if (heroHand.length < 2 || board.length < 3) {
+      set({ error: 'Need hero hand (2 cards) + board (3–5 cards)' });
+      return;
+    }
     set({ loading: true, error: null, result: null });
-    const params = {
-      hero_hand: s.heroHand,
-      board: s.board,
-      pot_bb: s.potBb,
-      hero_stack_bb: s.heroStackBb,
-      villain_stack_bb: s.villainStackBb,
-      to_call_bb: s.toCallBb,
-      is_ip: s.isIp,
-      villain_range: s.villainRange,
-    };
     try {
       let result: PostflopResult;
-      if (isTauri()) {
+      if (IS_TAURI) {
         const { invoke } = await import('@tauri-apps/api/core');
-        result = await invoke<PostflopResult>('solve_postflop', params);
+        result = await invoke<PostflopResult>('solve_postflop', {
+          heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp,
+          villainRangeStr: villainRange,
+        });
       } else {
-        await new Promise((r) => setTimeout(r, 600));
-        result = mockSolve(params);
+        await new Promise(r => setTimeout(r, 600));
+        result = mockSolve(potBb, heroStackBb, toCallBb, board);
       }
       set({ result, loading: false });
-    } catch (err: unknown) {
-      set({ error: String(err), loading: false });
+    } catch (e) {
+      set({ error: String(e), loading: false });
     }
   },
 
-  reset: () =>
-    set({
-      heroHand: [],
-      board: [],
-      potBb: 10,
-      heroStackBb: 100,
-      villainStackBb: 100,
-      toCallBb: 0,
-      isIp: true,
-      villainRange: 'top20%',
-      result: null,
-      loading: false,
-      error: null,
-    }),
+  reset: () => set({ ...INITIAL }),
 }));

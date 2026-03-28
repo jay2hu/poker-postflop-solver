@@ -1,96 +1,85 @@
-import React from 'react';
+import React, { memo } from 'react';
 
-const SUITS = ['s', 'h', 'd', 'c'] as const;
-const SUIT_SYMBOLS: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
-const SUIT_COLORS: Record<string, string> = {
-  s: '#94a3b8',
-  h: '#f87171',
+export const RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'] as const;
+export const SUITS = ['h','d','c','s'] as const;
+
+export const SUIT_SYMBOLS: Record<string, string> = { h:'♥', d:'♦', c:'♣', s:'♠' };
+export const SUIT_COLORS: Record<string, string>  = {
+  h: '#ef4444',
   d: '#f87171',
-  c: '#2dd4bf',
+  c: '#2dd4bf',  // teal
+  s: '#94a3b8',  // slate
 };
-const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'] as const;
 
-interface CardPickerProps {
-  value: string[];
+/** Display a single card: white bg, rank bold, suit colored */
+export const CardBadge = memo(({ card, size = 'sm' }: { card: string; size?: 'sm' | 'md' }) => {
+  const rank = card.slice(0, -1);
+  const suit = card.slice(-1).toLowerCase();
+  const color = SUIT_COLORS[suit] ?? '#e5e7eb';
+  const sym   = SUIT_SYMBOLS[suit] ?? suit;
+  const sm = size === 'sm';
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 1,
+      background: '#fff', borderRadius: sm ? 3 : 5,
+      padding: sm ? '1px 5px' : '3px 8px',
+      fontSize: sm ? 12 : 16,
+      fontFamily: 'monospace', fontWeight: 700,
+      lineHeight: 1, userSelect: 'none', color: '#111',
+    }}>
+      {rank}<span style={{ color, fontSize: sm ? 11 : 14 }}>{sym}</span>
+    </span>
+  );
+});
+CardBadge.displayName = 'CardBadge';
+
+/** 52-card picker grid. onSelect called with card string. */
+interface PickerProps {
+  selected: string[];
+  disabled: string[];
+  onSelect: (card: string) => void;
   maxCards: number;
-  onChange: (cards: string[]) => void;
-  disabledCards?: string[];
 }
 
-export const CardPicker: React.FC<CardPickerProps> = ({
-  value,
-  maxCards,
-  onChange,
-  disabledCards = [],
-}) => {
-  const toggle = (card: string) => {
-    if (disabledCards.includes(card)) return;
-    if (value.includes(card)) {
-      onChange(value.filter((c) => c !== card));
-    } else {
-      if (value.length >= maxCards) return;
-      onChange([...value, card]);
-    }
-  };
-
+export const CardPicker = memo(({ selected, disabled, onSelect, maxCards }: PickerProps) => {
+  const canSelect = selected.length < maxCards;
   return (
-    <div style={{ userSelect: 'none' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(13, 1fr)', gap: '2px' }}>
-        {SUITS.map((suit) =>
-          RANKS.map((rank) => {
+    <div>
+      {/* Suit rows */}
+      {SUITS.map(suit => (
+        <div key={suit} style={{ display: 'flex', gap: 2, marginBottom: 2 }}>
+          {RANKS.map(rank => {
             const card = `${rank}${suit}`;
-            const selected = value.includes(card);
-            const disabled = disabledCards.includes(card);
+            const isSel = selected.includes(card);
+            const isDis = disabled.includes(card) && !isSel;
             const color = SUIT_COLORS[suit];
             return (
               <button
                 key={card}
-                onClick={() => toggle(card)}
-                disabled={disabled}
-                data-testid={`card-${card}`}
+                disabled={isDis || (!isSel && !canSelect)}
+                onClick={() => onSelect(card)}
+                title={card}
                 style={{
-                  width: '28px',
-                  height: '32px',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                  border: selected ? `2px solid ${color}` : '1px solid #30363d',
-                  borderRadius: '3px',
-                  background: selected ? `${color}22` : disabled ? '#161b22' : '#0d1117',
-                  color: disabled ? '#3d4451' : color,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  lineHeight: 1,
-                  padding: 0,
-                  transition: 'all 0.1s',
+                  width: 24, height: 24, borderRadius: 3, border: '1px solid',
+                  fontSize: 9, fontFamily: 'monospace', fontWeight: 700,
+                  cursor: isDis || (!isSel && !canSelect) ? 'default' : 'pointer',
+                  background: isSel ? color : isDis ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)',
+                  color: isSel ? '#fff' : isDis ? '#1f2937' : color,
+                  borderColor: isSel ? color : isDis ? '#1f2937' : 'rgba(255,255,255,0.1)',
+                  opacity: isDis ? 0.4 : 1,
+                  transition: 'background 0.08s',
                 }}
               >
-                <span>{rank}</span>
-                <span style={{ fontSize: '8px' }}>{SUIT_SYMBOLS[suit]}</span>
+                {rank}
               </button>
             );
-          })
-        )}
-      </div>
-      {value.length > 0 && (
-        <button
-          onClick={() => onChange([])}
-          style={{
-            marginTop: '6px',
-            fontSize: '11px',
-            color: '#8b949e',
-            background: 'none',
-            border: '1px solid #30363d',
-            borderRadius: '4px',
-            padding: '2px 8px',
-            cursor: 'pointer',
-          }}
-        >
-          Clear
-        </button>
-      )}
+          })}
+          <span style={{ fontSize: 11, color: SUIT_COLORS[suit], marginLeft: 3, lineHeight: '24px' }}>
+            {SUIT_SYMBOLS[suit]}
+          </span>
+        </div>
+      ))}
     </div>
   );
-};
+});
+CardPicker.displayName = 'CardPicker';
