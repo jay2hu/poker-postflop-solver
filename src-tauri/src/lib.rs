@@ -193,13 +193,296 @@ fn solve_postflop(
 }
 
 // ---------------------------------------------------------------------------
+// Task 1: analyze_range_on_board
+// ---------------------------------------------------------------------------
+
+/// Compute per-hand equity data for the villain's range vs the hero's holding.
+///
+/// Returns bucket distribution, nut advantage, and per-hand equity breakdown.
+#[tauri::command]
+fn analyze_range_on_board(
+    villain_range_str: String,
+    hero_hand: Vec<String>,
+    board: Vec<String>,
+) -> Result<serde_json::Value, String> {
+    // Parse hero hand
+    if hero_hand.len() != 2 {
+        return Err(format!("Hero hand must have 2 cards, got {}", hero_hand.len()));
+    }
+    let h1 = parse_card(&hero_hand[0])?;
+    let h2 = parse_card(&hero_hand[1])?;
+
+    // Parse board
+    let board_cards: Vec<equity_engine::Card> = board.iter()
+        .map(|s| parse_card(s))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    // Build villain range and remove blockers
+    let range_str = expand_range_shorthand(&villain_range_str);
+    let mut villain_range = equity_engine::range::Range::from_str(&range_str)
+        .map_err(|e| format!("Invalid range: {e}"))?;
+
+    let mut known_cards = vec![h1, h2];
+    known_cards.extend_from_slice(&board_cards);
+    villain_range.remove_blockers(&known_cards);
+
+    if villain_range.is_empty() {
+        return Err("Villain range is empty after removing blockers".to_string());
+    }
+
+    // Build "hero as a range" (single hand at weight 1.0)
+    let hero_range = equity_engine::range::Range {
+        combos: vec![(h1, h2, 1.0)],
+    };
+
+    // Compute per-hand equity for each unique hand in villain range
+    // Group by canonical hand name, accumulate weighted equity
+    use std::collections::HashMap;
+    let mut hand_map: HashMap<String, (f64, f64, u32)> = HashMap::new(); // name → (total_weight, weighted_equity, combo_count)
+
+    for (vc1, vc2, weight) in &villain_range.combos {
+        let hand_name = canonical_hand_name(*vc1, *vc2);
+        // villain hand equity vs hero's holding
+        let villain_range_single = equity_engine::range::Range {
+            combos: vec![(*vc1, *vc2, 1.0)],
+        };
+        // villain equity vs hero hand = 1 - hero_equity_vs_villain
+        let hero_eq = equity_engine::postflop::hand_vs_range_equity(
+            (h1, h2), &villain_range_single, &board_cards, 500,
+        );
+        let villain_eq = 1.0 - hero_eq;
+
+        let entry = hand_map.entry(hand_name).or_insert((0.0, 0.0, 0));
+        entry.0 += weight;
+        entry.1 += villain_eq * weight;
+        entry.2 += 1;
+    }
+
+    // Build hands array
+    let mut hands = Vec::new();
+    for (hand_name, (total_w, weighted_eq, combo_count)) in &hand_map {
+        let avg_eq = if *total_w > 0.0 { weighted_eq / total_w } else { 0.5 };
+        let bucket = equity_bucket(avg_eq);
+        hands.push(serde_json::json!({
+            "hand": hand_name,
+            "weight": (total_w * 100.0).round() / 100.0,
+            "equity": (avg_eq * 1000.0).round() / 1000.0,
+            "combos": combo_count,
+            "equity_bucket": bucket,
+        }));
+    }
+    // Sort by equity descending
+    hands.sort_by(|a, b| {
+        let ea = a["equity"].as_f64().unwrap_or(0.0);
+        let eb = b["equity"].as_f64().unwrap_or(0.0);
+        eb.partial_cmp(&ea).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    // Bucket distribution
+    let total_weight: f64 = villain_range.combos.iter().map(|(_, _, w)| w).sum();
+    let mut bucket_weights = [0.0f64; 5];
+    for (vc1, vc2, weight) in &villain_range.combos {
+        let villain_range_single = equity_engine::range::Range { combos: vec![(*vc1, *vc2, 1.0)] };
+        let hero_eq = equity_engine::postflop::hand_vs_range_equity(
+            (h1, h2), &villain_range_single, &board_cards, 200,
+        );
+        let villain_eq = 1.0 - hero_eq;
+        bucket_weights[equity_bucket(villain_eq) as usize] += weight;
+    }
+    let equity_buckets: Vec<f64> = bucket_weights.iter()
+        .map(|&w| (w / total_weight * 1000.0).round() / 1000.0)
+        .collect();
+
+    // Average equities
+    let villain_avg_eq: f64 = villain_range.combos.iter().map(|(vc1, vc2, w)| {
+        let vr = equity_engine::range::Range { combos: vec![(*vc1, *vc2, 1.0)] };
+        let hero_eq = equity_engine::postflop::hand_vs_range_equity((h1, h2), &vr, &board_cards, 200);
+        (1.0 - hero_eq) * w
+    }).sum::<f64>() / total_weight;
+
+    let hero_avg_eq = 1.0 - villain_avg_eq;
+
+    // Nut advantage: % of range in top bucket (>80% equity)
+    let nut_pct_villain = equity_buckets[4];
+    // Hero nut % against villain range
+    let hero_nut_eq = equity_engine::postflop::hand_vs_range_equity((h1, h2), &villain_range, &board_cards, 1000);
+    let nut_pct_hero = if hero_nut_eq > 0.80 { 1.0 } else { 0.0 };
+
+    let nut_advantage = if nut_pct_hero > nut_pct_villain + 0.05 {
+        "hero"
+    } else if nut_pct_villain > nut_pct_hero + 0.05 {
+        "villain"
+    } else {
+        "neutral"
+    };
+
+    // Board texture label
+    let texture = equity_engine::postflop::BoardTexture::analyze(&board_cards);
+    let mut texture_parts: Vec<&str> = Vec::new();
+    if texture.is_monotone { texture_parts.push("Monotone"); }
+    else if texture.flush_draw_possible { texture_parts.push("Flush Draw"); }
+    if texture.is_paired { texture_parts.push("Paired"); }
+    if texture.straight_draw_possible { texture_parts.push("Straight Draw"); }
+    let texture_label = if texture_parts.is_empty() { "Dry".to_string() } else { texture_parts.join(", ") };
+
+    Ok(serde_json::json!({
+        "hands": hands,
+        "equity_buckets": equity_buckets,
+        "villain_avg_equity": (villain_avg_eq * 1000.0).round() / 1000.0,
+        "hero_avg_equity": (hero_avg_eq * 1000.0).round() / 1000.0,
+        "nut_advantage": nut_advantage,
+        "nut_pct_hero": (nut_pct_hero * 1000.0).round() / 1000.0,
+        "nut_pct_villain": (nut_pct_villain * 1000.0).round() / 1000.0,
+        "texture_label": texture_label,
+    }))
+}
+
+fn equity_bucket(eq: f64) -> u8 {
+    match (eq * 100.0) as u32 {
+        0..=19  => 0,
+        20..=39 => 1,
+        40..=59 => 2,
+        60..=79 => 3,
+        _       => 4,
+    }
+}
+
+/// Canonical hand name: "AA", "AKs", "AKo" from two cards
+fn canonical_hand_name(c1: equity_engine::Card, c2: equity_engine::Card) -> String {
+    fn rank_char(r: equity_engine::Rank) -> char {
+        match r {
+            equity_engine::Rank::Two => '2', equity_engine::Rank::Three => '3',
+            equity_engine::Rank::Four => '4', equity_engine::Rank::Five => '5',
+            equity_engine::Rank::Six => '6', equity_engine::Rank::Seven => '7',
+            equity_engine::Rank::Eight => '8', equity_engine::Rank::Nine => '9',
+            equity_engine::Rank::Ten => 'T', equity_engine::Rank::Jack => 'J',
+            equity_engine::Rank::Queen => 'Q', equity_engine::Rank::King => 'K',
+            equity_engine::Rank::Ace => 'A',
+        }
+    }
+    fn rank_val(r: equity_engine::Rank) -> u8 {
+        match r {
+            equity_engine::Rank::Two => 2, equity_engine::Rank::Three => 3,
+            equity_engine::Rank::Four => 4, equity_engine::Rank::Five => 5,
+            equity_engine::Rank::Six => 6, equity_engine::Rank::Seven => 7,
+            equity_engine::Rank::Eight => 8, equity_engine::Rank::Nine => 9,
+            equity_engine::Rank::Ten => 10, equity_engine::Rank::Jack => 11,
+            equity_engine::Rank::Queen => 12, equity_engine::Rank::King => 13,
+            equity_engine::Rank::Ace => 14,
+        }
+    }
+    let (hi, lo) = if rank_val(c1.rank) >= rank_val(c2.rank) { (c1, c2) } else { (c2, c1) };
+    if hi.rank == lo.rank {
+        format!("{}{}", rank_char(hi.rank), rank_char(lo.rank))
+    } else if hi.suit == lo.suit {
+        format!("{}{}s", rank_char(hi.rank), rank_char(lo.rank))
+    } else {
+        format!("{}{}o", rank_char(hi.rank), rank_char(lo.rank))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Task 2: compare_bet_sizes
+// ---------------------------------------------------------------------------
+
+/// Compare EV of different bet sizes for a first-to-act spot.
+#[tauri::command]
+fn compare_bet_sizes(
+    hero_hand: Vec<String>,
+    board: Vec<String>,
+    pot_bb: f64,
+    hero_stack_bb: f64,
+    villain_stack_bb: f64,
+    villain_range_str: String,
+) -> Result<serde_json::Value, String> {
+    let h1 = parse_card(&hero_hand[0])?;
+    let h2 = parse_card(&hero_hand[1])?;
+
+    let board_cards: Vec<equity_engine::Card> = board.iter()
+        .map(|s| parse_card(s))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let range_str = expand_range_shorthand(&villain_range_str);
+    let mut villain_range = equity_engine::range::Range::from_str(&range_str)
+        .map_err(|e| format!("Invalid range: {e}"))?;
+
+    let mut known_cards = vec![h1, h2];
+    known_cards.extend_from_slice(&board_cards);
+    villain_range.remove_blockers(&known_cards);
+
+    if villain_range.is_empty() {
+        return Err("Villain range is empty after removing blockers".to_string());
+    }
+
+    // Hero equity vs villain range
+    let hero_equity = equity_engine::postflop::hand_vs_range_equity(
+        (h1, h2), &villain_range, &board_cards, 3000,
+    );
+
+    let eff_stack = hero_stack_bb.min(villain_stack_bb);
+    let villain_folding_freq = (1.0 - hero_equity * 1.4).clamp(0.0, 0.85);
+
+    // Bet size options
+    let sizes: &[(&str, f64)] = &[
+        ("Check",    0.0),
+        ("33% pot",  0.33),
+        ("50% pot",  0.50),
+        ("75% pot",  0.75),
+        ("Pot",      1.00),
+    ];
+
+    let mut options = Vec::new();
+    let mut best_ev = f64::NEG_INFINITY;
+    let mut best_idx = 0usize;
+
+    for (i, (label, pct_pot)) in sizes.iter().enumerate() {
+        let bet_bb = (pot_bb * pct_pot).min(eff_stack);
+
+        let (ev, fold_eq) = if *pct_pot == 0.0 {
+            // Check: EV = pot_bb * hero_equity (simplified: we "win" equity fraction of pot)
+            let ev = pot_bb * hero_equity;
+            (ev, 0.0f64)
+        } else {
+            let fold_equity = (bet_bb / (pot_bb + bet_bb)) * villain_folding_freq;
+            let ev_if_called = hero_equity * (pot_bb + 2.0 * bet_bb);
+            let ev_if_folded = pot_bb + bet_bb;
+            let ev = fold_equity * ev_if_folded + (1.0 - fold_equity) * ev_if_called;
+            (ev, fold_equity)
+        };
+
+        if ev > best_ev {
+            best_ev = ev;
+            best_idx = i;
+        }
+
+        options.push(serde_json::json!({
+            "label":    label,
+            "pct_pot":  pct_pot,
+            "bb":       (bet_bb * 10.0).round() / 10.0,
+            "ev":       (ev * 10.0).round() / 10.0,
+            "fold_eq":  (fold_eq * 1000.0).round() / 1000.0,
+        }));
+    }
+
+    Ok(serde_json::json!({
+        "options":         options,
+        "recommended_idx": best_idx,
+        "hero_equity":     (hero_equity * 1000.0).round() / 1000.0,
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // App entry point
 // ---------------------------------------------------------------------------
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![solve_postflop])
+        .invoke_handler(tauri::generate_handler![
+            solve_postflop,
+            analyze_range_on_board,
+            compare_bet_sizes,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running poker-postflop-solver");
 }
