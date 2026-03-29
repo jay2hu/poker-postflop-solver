@@ -59,7 +59,7 @@ function mockRangeAnalysis(board: string[], heroHand: string[]): RangeAnalysis {
     hero_avg_equity: 0.564,
     villain_avg_equity: 0.436,
     nut_advantage: 'hero',
-    buckets: [0.12, 0.18, 0.22, 0.28, 0.20],
+    equity_buckets: [0.12, 0.18, 0.22, 0.28, 0.20],
   };
 }
 

@@ -22,7 +22,7 @@ export interface RangeAnalysis {
   hero_avg_equity: number;
   villain_avg_equity: number;
   nut_advantage: 'hero' | 'villain' | 'neutral';
-  buckets: number[];   // 5 values summing to 1 (equity_bucket distribution)
+  equity_buckets: number[];   // 5 values summing to 1 (0-20,20-40,40-60,60-80,80-100%)
 }
 
 export interface BetOption {

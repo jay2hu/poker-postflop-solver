@@ -2,13 +2,14 @@ import React, { memo } from 'react';
 import { bucketColor } from './RangeGrid';
 
 interface Props {
-  buckets: number[];          // 5 values summing to 1
+  equity_equity_buckets: number[];          // 5 values summing to 1
   heroAvgEquity: number;      // 0–1
   villainAvgEquity: number;   // 0–1
   nutAdvantage: 'hero' | 'villain' | 'neutral';
 }
 
-export const EquityDistribution = memo(({ buckets, heroAvgEquity, villainAvgEquity, nutAdvantage }: Props) => {
+export const EquityDistribution = memo(({ buckets: equity_buckets, heroAvgEquity, villainAvgEquity, nutAdvantage }: Props) => {
+  if (!buckets?.length) return null;
   const pcts = buckets.map(b => Math.round(b * 100));
 
   return (

@@ -246,7 +246,7 @@ const App = () => {
                   {rangeExpanded && (
                     <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
                       <RangeGrid hands={rangeAnalysis?.hands??[]} loading={rangeLoading} />
-                      {rangeAnalysis && <EquityDistribution buckets={rangeAnalysis.buckets} heroAvgEquity={rangeAnalysis.hero_avg_equity} villainAvgEquity={rangeAnalysis.villain_avg_equity} nutAdvantage={rangeAnalysis.nut_advantage} />}
+                      {rangeAnalysis && <EquityDistribution buckets={rangeAnalysis.equity_buckets} heroAvgEquity={rangeAnalysis.hero_avg_equity} villainAvgEquity={rangeAnalysis.villain_avg_equity} nutAdvantage={rangeAnalysis.nut_advantage} />}
                     </div>
                   )}
                 </div>
