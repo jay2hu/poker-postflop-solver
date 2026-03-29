@@ -78,8 +78,7 @@ const App = () => {
               <button onClick={() => setShowHeroPicker(v => !v)} style={{
                 padding: '2px 8px', borderRadius: 4, fontSize: 11, cursor: 'pointer',
                 border: '1px solid #374151', background: showHeroPicker ? '#1e3a1e' : 'transparent', color: '#9ca3af',
-              }}>{showHeroPicker ? 'Done' : heroHand.length > 0 ? 'Edit' : '+ Pick'}</button>
-              {heroHand.length > 0 && <button onClick={() => setHeroHand([])} style={{ padding: '2px 6px', borderRadius: 4, fontSize: 10, cursor: 'pointer', border: '1px solid #374151', background: 'transparent', color: '#6b7280' }}>Clear</button>}
+              }}>+ Pick</button>
             </div>
             {showHeroPicker && (
               <CardPicker
@@ -99,8 +98,7 @@ const App = () => {
               <button onClick={() => setShowBoardPicker(v => !v)} style={{
                 padding: '2px 8px', borderRadius: 4, fontSize: 11, cursor: 'pointer',
                 border: '1px solid #374151', background: showBoardPicker ? '#1e3a1e' : 'transparent', color: '#9ca3af',
-              }}>{showBoardPicker ? 'Done' : board.length > 0 ? 'Edit' : '+ Pick'}</button>
-              {board.length > 0 && <button onClick={() => setBoard([])} style={{ padding: '2px 6px', borderRadius: 4, fontSize: 10, cursor: 'pointer', border: '1px solid #374151', background: 'transparent', color: '#6b7280' }}>Clear</button>}
+              }}>+ Pick</button>
             </div>
             {showBoardPicker && (
               <div style={{ marginTop: 8 }}>
@@ -211,7 +209,7 @@ const App = () => {
               <div style={{ display: 'flex', gap: 20 }}>
                 {[
                   { label: 'SPR', value: result.spr.toFixed(1) },
-                  { label: 'Pot odds', value: `${(result.pot_odds * 100).toFixed(1)}%` },
+                  { label: 'Pot odds', value: result.pot_odds > 0 ? `${result.pot_odds.toFixed(1)}%` : '—' },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontSize: 10, color: '#6b7280', marginBottom: 2 }}>{label}</span>
