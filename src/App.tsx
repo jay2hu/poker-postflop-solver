@@ -10,6 +10,7 @@ import { useSolverStore } from './store/solverStore';
 import './index.css';
 import { RangeGrid } from './components/RangeGrid';
 import { EquityDistribution } from './components/EquityDistribution';
+import { BetSizeComparison } from './components/BetSizeComparison';
 import { DebugSteps } from './components/DebugSteps';
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
