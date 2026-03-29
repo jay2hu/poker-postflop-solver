@@ -239,7 +239,7 @@ const App = () => {
               {(rangeAnalysis || rangeLoading) && (
                 <div>
                   <button onClick={() => setRangeExpanded(v => !v)} style={{ background:'none',border:'none',cursor:'pointer',padding:0,display:'flex',alignItems:'center',gap:4,marginBottom:8 }}>
-                    <span style={{ fontSize:10,color:'#6b7280',textTransform:'uppercase',letterSpacing:1 }}>{rangeExpanded?'▾':'▸'} Range Analysis</span>
+                    <span style={{ fontSize:10,color:'#6b7280',textTransform:'uppercase',letterSpacing:1 }}>{rangeExpanded?'▾':'▸'} Villain Range on Board</span>
                   </button>
                   {rangeExpanded && (
                     <div style={{ display:'flex',flexDirection:'column',gap:16 }}>

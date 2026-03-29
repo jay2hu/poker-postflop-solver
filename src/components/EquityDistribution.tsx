@@ -15,7 +15,7 @@ export const EquityDistribution = memo(({ equity_buckets, heroAvgEquity, villain
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
-        Villain Range Distribution
+        Villain Range Equity Distribution
       </div>
 
       {/* 5-segment stacked bar */}
