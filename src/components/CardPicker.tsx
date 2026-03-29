@@ -1,8 +1,8 @@
 import React from 'react';
 
 const SUITS = ['s', 'h', 'd', 'c'] as const;
-const SUIT_SYMBOLS: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
-const SUIT_COLORS: Record<string, string> = {
+export const SUIT_SYMBOLS: Record<string, string> = { s: '♠', h: '♥', d: '♦', c: '♣' };
+export const SUIT_COLORS: Record<string, string> = {
   s: '#94a3b8',
   h: '#f87171',
   d: '#f87171',
