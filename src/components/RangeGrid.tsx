@@ -6,8 +6,8 @@ export const RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'] as co
 function handFromCell(row: number, col: number): string {
   const r = RANKS[row], c = RANKS[col];
   if (row === col) return `${r}${r}`;
-  if (row < col)  return `${r}${c}s`;
-  return `${r}${c}o`;
+  if (row < col)  return `${r}${c}s`;   // suited: row < col, r is higher rank
+  return `${c}${r}o`;                    // offsuit: col < row, c is higher rank
 }
 
 /** Equity bucket → background color (villain's equity vs hero) */

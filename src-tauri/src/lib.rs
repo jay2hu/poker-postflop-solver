@@ -183,7 +183,7 @@ fn solve_postflop(
     let mut debug_steps: Vec<String> = vec![
         format!("1. Street: {} (board has {} cards)", match board_cards.len() { 3=>"Flop", 4=>"Turn", _=>"River" }, board_cards.len()),
         format!("2. Position: {}", if is_ip { "IP (in position — act last)" } else { "OOP (out of position — act first)" }),
-        format!("3. Villain range: \"{}\" → {} combos after blocking",
+        format!("3. Villain range: \"{}\" → {} combos after removing your cards & board blockers",
             villain_range.trim(),
             villain_range_obj.combos.len()),
         format!("4. Board texture: {} (monotone={}, paired={}, flush_draw={}, straight_draw={})",
