@@ -6,7 +6,7 @@ const IS_TAURI = '__TAURI_INTERNALS__' in window;
 
 // ── Mock generators ───────────────────────────────────────────────────────────
 
-function mockSolve(potBb: number, heroStackBb: number, toCallBb: number, board: string[]): PostflopResult {
+function mockSolve(potBb: number, heroStackBb: number, toCallBb: number, board: string[], villainRange = 'top15%'): PostflopResult {
   const equity = 0.5 + (board.length * 0.032) % 0.3;
   const spr    = heroStackBb / Math.max(potBb, 1);
   const potOdds = toCallBb > 0 ? toCallBb / (potBb + toCallBb) : 0;
@@ -124,7 +124,7 @@ export const useSolverStore = create<Store>((set, get) => ({
         });
       } else {
         await new Promise(r => setTimeout(r, 600));
-        result = mockSolve(potBb, heroStackBb, toCallBb, board);
+        result = mockSolve(potBb, heroStackBb, toCallBb, board, villainRange);
       }
       set({ result, loading: false });
 

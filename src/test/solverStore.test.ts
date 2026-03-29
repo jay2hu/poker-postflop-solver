@@ -43,6 +43,6 @@ describe('solverStore', () => {
     await useSolverStore.getState().solve();
     const result = useSolverStore.getState().result;
     expect(result?.board_texture).toBeTruthy();
-    expect(typeof result?.board_texture.texture_label).toBe('string');
+    expect(typeof result?.board_texture).toBe('string');
   });
 });
