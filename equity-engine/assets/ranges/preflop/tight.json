@@ -1,0 +1,8 @@
+{
+  "name": "tight",
+  "street": "preflop",
+  "combos": [
+    {"combo": "AA"}, {"combo": "KK"}, {"combo": "QQ"}, {"combo": "JJ"}, {"combo": "TT"},
+    {"combo": "AKs"}, {"combo": "AQs"}, {"combo": "AJs"}, {"combo": "AKo"}
+  ]
+}

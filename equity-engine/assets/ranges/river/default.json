@@ -1,0 +1,12 @@
+{
+  "name": "default",
+  "street": "river",
+  "combos": [
+    {"combo": "AA"}, {"combo": "KK"}, {"combo": "QQ"}, {"combo": "JJ"}, {"combo": "TT"},
+    {"combo": "99"},
+    {"combo": "AKs"}, {"combo": "AQs"}, {"combo": "AJs"},
+    {"combo": "KQs"}, {"combo": "QJs"},
+    {"combo": "AKo"}, {"combo": "AQo"},
+    {"combo": "88", "weight": 0.5}, {"combo": "77", "weight": 0.3}
+  ]
+}

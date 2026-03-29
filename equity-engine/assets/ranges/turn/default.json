@@ -1,0 +1,13 @@
+{
+  "name": "default",
+  "street": "turn",
+  "combos": [
+    {"combo": "AA"}, {"combo": "KK"}, {"combo": "QQ"}, {"combo": "JJ"}, {"combo": "TT"},
+    {"combo": "99"}, {"combo": "88"},
+    {"combo": "AKs"}, {"combo": "AQs"}, {"combo": "AJs"}, {"combo": "ATs"},
+    {"combo": "KQs"}, {"combo": "QJs"},
+    {"combo": "AKo"}, {"combo": "AQo"},
+    {"combo": "KQo"},
+    {"combo": "77", "weight": 0.4}, {"combo": "JTs", "weight": 0.6}
+  ]
+}

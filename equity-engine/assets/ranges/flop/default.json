@@ -1,0 +1,13 @@
+{
+  "name": "default",
+  "street": "flop",
+  "combos": [
+    {"combo": "AA"}, {"combo": "KK"}, {"combo": "QQ"}, {"combo": "JJ"}, {"combo": "TT"},
+    {"combo": "99"}, {"combo": "88"},
+    {"combo": "AKs"}, {"combo": "AQs"}, {"combo": "AJs"}, {"combo": "ATs"},
+    {"combo": "KQs"}, {"combo": "KJs"}, {"combo": "QJs"},
+    {"combo": "AKo"}, {"combo": "AQo"}, {"combo": "AJo"},
+    {"combo": "KQo"},
+    {"combo": "77", "weight": 0.5}, {"combo": "66", "weight": 0.5}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "loose",
+  "street": "river",
+  "combos": [
+    {"combo": "AA"}, {"combo": "KK"}, {"combo": "QQ"}, {"combo": "JJ"}, {"combo": "TT"},
+    {"combo": "99"}, {"combo": "88"}, {"combo": "77"}, {"combo": "66"},
+    {"combo": "AKs"}, {"combo": "AQs"}, {"combo": "AJs"}, {"combo": "ATs"}, {"combo": "A9s"},
+    {"combo": "A8s"}, {"combo": "A5s"},
+    {"combo": "KQs"}, {"combo": "KJs"}, {"combo": "QJs"}, {"combo": "JTs"}, {"combo": "T9s"},
+    {"combo": "98s"}, {"combo": "87s"},
+    {"combo": "AKo"}, {"combo": "AQo"}, {"combo": "AJo"},
+    {"combo": "KQo"}, {"combo": "QJo"},
+    {"combo": "55", "weight": 0.3}, {"combo": "44", "weight": 0.2}
+  ]
+}

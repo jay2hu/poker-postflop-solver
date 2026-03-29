@@ -1,0 +1,8 @@
+{
+  "name": "tight",
+  "street": "river",
+  "combos": [
+    {"combo": "AA"}, {"combo": "KK"}, {"combo": "QQ"}, {"combo": "JJ"}, {"combo": "TT"},
+    {"combo": "AKs"}, {"combo": "AKo"}
+  ]
+}

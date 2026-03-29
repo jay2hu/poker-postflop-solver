@@ -1,0 +1,12 @@
+{
+  "name": "default",
+  "street": "preflop",
+  "combos": [
+    {"combo": "AA"}, {"combo": "KK"}, {"combo": "QQ"}, {"combo": "JJ"}, {"combo": "TT"},
+    {"combo": "99"}, {"combo": "88"}, {"combo": "77"},
+    {"combo": "AKs"}, {"combo": "AQs"}, {"combo": "AJs"}, {"combo": "ATs"},
+    {"combo": "KQs"}, {"combo": "KJs"}, {"combo": "QJs"},
+    {"combo": "AKo"}, {"combo": "AQo"}, {"combo": "AJo"},
+    {"combo": "KQo"}
+  ]
+}
