@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "src-tauri",
+    "equity-engine",
+]
+resolver = "2"
