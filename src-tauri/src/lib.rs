@@ -180,8 +180,9 @@ fn solve_postflop(
     }.to_string();
 
     // Build step-by-step debug explanation
+    let board_str: Vec<String> = board.iter().map(|s| s.clone()).collect();
     let mut debug_steps: Vec<String> = vec![
-        format!("1. Street: {} (board has {} cards)", match board_cards.len() { 3=>"Flop", 4=>"Turn", _=>"River" }, board_cards.len()),
+        format!("1. Street: {} — board: [{}]", match board_cards.len() { 3=>"Flop", 4=>"Turn", _=>"River" }, board_str.join(", ")),
         format!("2. Position: {}", if is_ip { "IP (in position — act last)" } else { "OOP (out of position — act first)" }),
         format!("3. Villain range: \"{}\" → {} combos after removing your cards & board blockers",
             villain_range.trim(),
