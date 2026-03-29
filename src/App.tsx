@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Titlebar } from './components/Titlebar';
 import { CardPicker, SUIT_SYMBOLS, SUIT_COLORS } from './components/CardPicker';
-import { EquityBar, ActionBadge, RangeSelector, BoardDisplay } from './components/SolverComponents';
+import { EquityBar, ActionBadge, BoardDisplay } from './components/SolverComponents';
+import { VillainRangeBuilder } from './components/VillainRangeBuilder';
 import { useSolverStore } from './store/solverStore';
 import './index.css';
 import { RangeGrid } from './components/RangeGrid';
@@ -146,7 +147,7 @@ const App = () => {
           {/* Villain range */}
           <div>
             <SectionLabel>Villain Range</SectionLabel>
-            <RangeSelector value={villainRange} onChange={setVillainRange} />
+            <VillainRangeBuilder />
           </div>
 
           {/* Solve / reset buttons */}

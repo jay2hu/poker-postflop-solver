@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { SolverState, PostflopResult, RangeAnalysis, BetSizeAnalysis, RangeHandData } from '../types/solver';
+import type { RangeMap } from '../lib/rangeUtils';
+import { rangeMapToString } from '../lib/rangeUtils';
 import { RANKS } from '../components/RangeGrid';
 
 const IS_TAURI = '__TAURI_INTERNALS__' in window;
@@ -72,6 +74,7 @@ interface Store extends SolverState {
   setToCallBb: (v: number) => void;
   setIsIp: (v: boolean) => void;
   setVillainRange: (v: string) => void;
+  setVillainRangeMap: (map: RangeMap) => void;
   solve: () => Promise<void>;
   reset: () => void;
 }
@@ -79,7 +82,7 @@ interface Store extends SolverState {
 const INITIAL: SolverState = {
   heroHand: [], board: [], potBb: 10,
   heroStackBb: 100, villainStackBb: 100, toCallBb: 0,
-  isIp: true, villainRange: 'top15%',
+  isIp: true, villainRange: 'top15%', villainRangeMap: {},
   result: null, loading: false, error: null,
   rangeAnalysis: null, rangeLoading: false,
   betSizes: null, betSizesLoading: false,
@@ -95,9 +98,14 @@ export const useSolverStore = create<Store>((set, get) => ({
   setToCallBb: (toCallBb) => set({ toCallBb }),
   setIsIp: (isIp) => set({ isIp }),
   setVillainRange: (villainRange) => set({ villainRange }),
+  setVillainRangeMap: (villainRangeMap) => set({
+    villainRangeMap,
+    villainRange: rangeMapToString(villainRangeMap),
+  }),
 
   solve: async () => {
-    const { heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRange } = get();
+    const { heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRange, villainRangeMap } = get();
+    const effectiveRange = Object.keys(villainRangeMap).length > 0 ? rangeMapToString(villainRangeMap) : villainRange;
     if (heroHand.length < 2 || board.length < 3) {
       set({ error: 'Need hero hand (2 cards) + board (3–5 cards)' }); return;
     }
@@ -107,7 +115,7 @@ export const useSolverStore = create<Store>((set, get) => ({
       if (IS_TAURI) {
         const { invoke } = await import('@tauri-apps/api/core');
         result = await invoke<PostflopResult>('solve_postflop', {
-          heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRangeStr: villainRange,
+          heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRangeStr: effectiveRange,
         });
       } else {
         await new Promise(r => setTimeout(r, 600));

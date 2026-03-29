@@ -48,6 +48,7 @@ export interface SolverState {
   toCallBb: number;
   isIp: boolean;
   villainRange: string;
+  villainRangeMap: Record<string, number>;
   result: PostflopResult | null;
   loading: boolean;
   error: string | null;
