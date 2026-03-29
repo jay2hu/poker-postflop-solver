@@ -48,7 +48,9 @@ impl BoardTexture {
         if ranks.contains(&14) { ranks.push(1); } // ace-low
         ranks.sort_unstable();
         ranks.dedup();
-        let straight_draw_possible = ranks.windows(2).any(|w| w[1] - w[0] <= 4);
+        // Straight draw: need at least 3 cards within a 5-rank window
+        // (single pair of connected cards like AK alone is not a straight draw)
+        let straight_draw_possible = board.len() >= 3 && ranks.windows(3).any(|w| w[2] - w[0] <= 4);
         let is_connected = board.len() >= 3 && {
             ranks.windows(3).any(|w| w[2] - w[0] <= 4)
         };
