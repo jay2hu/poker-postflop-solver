@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { SolverState, PostflopResult, RangeAnalysis, BetSizeAnalysis, RangeHandData } from '../types/solver';
 import { RANKS } from '../components/RangeGrid';
+import { rangeMapToString } from '../lib/rangeUtils';
 
 const IS_TAURI = '__TAURI_INTERNALS__' in window;
 
@@ -85,6 +86,8 @@ interface Store extends SolverState {
   setToCallBb: (v: number) => void;
   setIsIp: (v: boolean) => void;
   setVillainRange: (v: string) => void;
+  villainRangeMap: Record<string, number>;
+  setVillainRangeMap: (map: Record<string, number>) => void;
   solve: () => Promise<void>;
   reset: () => void;
 }
@@ -92,7 +95,7 @@ interface Store extends SolverState {
 const INITIAL: SolverState = {
   heroHand: [], board: [], potBb: 10,
   heroStackBb: 100, villainStackBb: 100, toCallBb: 0,
-  isIp: true, villainRange: 'top15%',
+  isIp: true, villainRange: 'top15%', villainRangeMap: {},
   result: null, loading: false, error: null,
   rangeAnalysis: null, rangeLoading: false,
   betSizes: null, betSizesLoading: false,
@@ -108,6 +111,10 @@ export const useSolverStore = create<Store>((set, get) => ({
   setToCallBb: (toCallBb) => set({ toCallBb }),
   setIsIp: (isIp) => set({ isIp }),
   setVillainRange: (villainRange) => set({ villainRange }),
+  setVillainRangeMap: (villainRangeMap) => {
+    const str = rangeMapToString(villainRangeMap);
+    set({ villainRangeMap, villainRange: str || 'top15%' });
+  },
 
   solve: async () => {
     const { heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRange } = get();

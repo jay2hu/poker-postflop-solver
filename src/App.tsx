@@ -4,7 +4,7 @@ import { TitleBar as Titlebar } from './components/TitleBar';
 import { CardPicker, SUIT_SYMBOLS, SUIT_COLORS } from './components/CardPicker';
 import { EquityBar } from './components/EquityBar';
 import { ActionBadge } from './components/ActionBadge';
-import { RangeSelector } from './components/RangeSelector';
+import { VillainRangeBuilder } from './components/VillainRangeBuilder';
 import { BoardDisplay } from './components/BoardDisplay';
 import { useSolverStore } from './store/solverStore';
 import './index.css';
@@ -144,7 +144,7 @@ const App = () => {
           {/* Villain range */}
           <div>
             <SectionLabel>Villain Range</SectionLabel>
-            <RangeSelector value={villainRange} onChange={setVillainRange} />
+            <VillainRangeBuilder />
           </div>
 
           {/* Solve / reset buttons */}
