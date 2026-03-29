@@ -87,7 +87,7 @@ const App = () => {
             {showHeroPicker && (
               <CardPicker
                 selected={heroHand}
-                disabled={allUsedCards.filter(c => !heroHand.includes(c))}
+                disabledCards={allUsedCards.filter(c => !heroHand.includes(c))}
                 onSelect={c => toggleCard(c, heroHand, setHeroHand, 2)}
                 maxCards={2}
               />
@@ -109,7 +109,7 @@ const App = () => {
               <div style={{ marginTop: 8 }}>
                 <CardPicker
                   selected={board}
-                  disabled={allUsedCards.filter(c => !board.includes(c))}
+                  disabledCards={allUsedCards.filter(c => !board.includes(c))}
                   onSelect={c => toggleCard(c, board, setBoard, 5)}
                   maxCards={5}
                 />
