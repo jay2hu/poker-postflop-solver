@@ -10,7 +10,7 @@ import { useSolverStore } from './store/solverStore';
 import './index.css';
 import { RangeGrid } from './components/RangeGrid';
 import { EquityDistribution } from './components/EquityDistribution';
-import { BetSizeComparison } from './components/BetSizeComparison';
+import { DebugSteps } from './components/DebugSteps';
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <div style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>{children}</div>
@@ -236,6 +236,9 @@ const App = () => {
                   {result.reasoning}
                 </div>
               </div>
+
+              {/* Debug steps */}
+              {result.debug_steps && <DebugSteps steps={result.debug_steps} />}
 
               {/* Range Analysis */}
               {(rangeAnalysis || rangeLoading) && (

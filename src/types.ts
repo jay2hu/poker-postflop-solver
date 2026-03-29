@@ -14,4 +14,5 @@ export interface PostflopResult {
     has_flush_draw: boolean;
     texture_label: string;
   };
+  debug_steps?: string[];
 }

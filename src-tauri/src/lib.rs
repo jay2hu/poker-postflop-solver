@@ -31,6 +31,7 @@ pub struct PostflopResult {
     pub ev_estimate: f64,
     pub reasoning: String,
     pub board_texture: BoardTextureInfo,
+    pub debug_steps: Vec<String>,
 }
 
 // ---------------------------------------------------------------------------
@@ -165,18 +166,55 @@ fn solve_postflop(
         to_call_bb / (pot_bb + to_call_bb) * 100.0
     } else { 0.0 };
 
-    let action_str = match &decision.action {
-        equity_engine::postflop_solver::PostflopAction::Fold    => "FOLD",
-        equity_engine::postflop_solver::PostflopAction::Check   => "CHECK",
-        equity_engine::postflop_solver::PostflopAction::Call    => "CALL",
-        equity_engine::postflop_solver::PostflopAction::Bet(_)  => "BET",
-        equity_engine::postflop_solver::PostflopAction::Raise(_)=> "RAISE",
-    }.to_string();
+    let equity_pct = (decision.equity * 1000.0).round() / 10.0;
+    let pot_odds_rounded = (pot_odds_pct * 10.0).round() / 10.0;
+    let spr_rounded = (spr * 10.0).round() / 10.0;
+
+    // Build step-by-step debug explanation
+    let mut debug_steps: Vec<String> = vec![
+        format!("1. Street: {} (board has {} cards)", match board_cards.len() { 3=>"Flop", 4=>"Turn", _=>"River" }, board_cards.len()),
+        format!("2. Position: {}", if is_ip { "IP (in position — act last)" } else { "OOP (out of position — act first)" }),
+        format!("3. Villain range: \"{}\" → {} combos after blocking",
+            villain_range.trim(),
+            villain_range_obj.combos.len()),
+        format!("4. Board texture: {} (monotone={}, paired={}, flush_draw={}, straight_draw={})",
+            texture_label, texture.is_monotone, texture.is_paired,
+            texture.flush_draw_possible, texture.straight_draw_possible),
+        format!("5. Hero equity vs villain range: {:.1}% (Monte Carlo, {} iterations)",
+            equity_pct,
+            match board_cards.len() { 3=>3000, 4=>5000, _=>7000 }),
+        format!("6. SPR = eff_stack / pot = {:.1} / {:.1} = {:.1}",
+            hero_stack_bb.min(villain_stack_bb), pot_bb, spr_rounded),
+    ];
+
+    if to_call_bb > 0.0 {
+        debug_steps.push(format!("7. Facing bet: to_call={:.1}bb — pot_odds = {:.1} / ({:.1} + {:.1}) = {:.1}%",
+            to_call_bb, to_call_bb, pot_bb, to_call_bb, pot_odds_rounded));
+        let threshold = pot_odds_rounded / 100.0;
+        debug_steps.push(format!("8. Equity ({:.1}%) vs pot_odds ({:.1}%): {}",
+            equity_pct, pot_odds_rounded,
+            if decision.equity < threshold * 0.85 { "equity < 85% of required → FOLD" }
+            else if decision.equity > threshold * 1.3 { "equity > 130% of required → RAISE" }
+            else { "equity in call range → CALL" }));
+    } else {
+        debug_steps.push(format!("7. First to act (to_call=0) — deciding bet/check"));
+        debug_steps.push(format!("8. Equity {:.1}%: {}",
+            equity_pct,
+            if decision.equity > 0.65 { ">65% → BET 65% pot (value)" }
+            else if decision.equity > 0.52 { ">52% → BET 33% pot (thin value/block)" }
+            else { "≤52% → CHECK" }));
+    }
+
+    if spr_rounded < 3.0 {
+        debug_steps.push(format!("9. SPR {:.1} < 3 → shallow stack adjustment applied", spr_rounded));
+    }
+
+    debug_steps.push(format!("10. Decision: {} (EV estimate: {:.2}bb)", action_str, (decision.ev_estimate * 10.0).round() / 10.0));
 
     Ok(PostflopResult {
-        equity: (decision.equity * 1000.0).round() / 10.0,  // % with 1 decimal
-        pot_odds: (pot_odds_pct * 10.0).round() / 10.0,
-        spr: (spr * 10.0).round() / 10.0,
+        equity: equity_pct,
+        pot_odds: pot_odds_rounded,
+        spr: spr_rounded,
         action: action_str,
         sizing_bb: decision.sizing_bb.map(|v| (v * 10.0).round() / 10.0),
         sizing_pct_pot: decision.sizing_pct_pot.map(|v| (v * 100.0).round()),
@@ -189,6 +227,7 @@ fn solve_postflop(
             has_flush_draw: texture.flush_draw_possible,
             texture_label,
         },
+        debug_steps,
     })
 }
 
