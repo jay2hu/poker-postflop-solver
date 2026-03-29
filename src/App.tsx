@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import React, { useState } from 'react';
-import { Titlebar } from './components/TitleBar';
+import { TitleBar as Titlebar } from './components/TitleBar';
 import { CardPicker, SUIT_SYMBOLS, SUIT_COLORS } from './components/CardPicker';
 import { EquityBar } from './components/EquityBar';
 import { ActionBadge } from './components/ActionBadge';
