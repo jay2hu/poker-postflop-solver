@@ -120,7 +120,7 @@ export const useSolverStore = create<Store>((set, get) => ({
       if (IS_TAURI) {
         const { invoke } = await import('@tauri-apps/api/core');
         result = await invoke<PostflopResult>('solve_postflop', {
-          heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRangeStr: villainRange,
+          heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRange,
         });
       } else {
         await new Promise(r => setTimeout(r, 600));
