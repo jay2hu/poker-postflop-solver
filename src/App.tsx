@@ -49,10 +49,6 @@ const App = () => {
 
   const allUsedCards = [...heroHand, ...board];
 
-  const toggleCard = (card: string, current: string[], setter: (c: string[]) => void, max: number) => {
-    if (current.includes(card)) setter(current.filter(c => c !== card));
-    else if (current.length < max) setter([...current, card]);
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0f0f0f', color: '#e5e7eb' }}>
@@ -86,9 +82,9 @@ const App = () => {
             </div>
             {showHeroPicker && (
               <CardPicker
-                selected={heroHand}
+                value={heroHand}
                 disabledCards={allUsedCards.filter(c => !heroHand.includes(c))}
-                onSelect={c => toggleCard(c, heroHand, setHeroHand, 2)}
+                onChange={cards => setHeroHand(cards)}
                 maxCards={2}
               />
             )}
@@ -108,9 +104,9 @@ const App = () => {
             {showBoardPicker && (
               <div style={{ marginTop: 8 }}>
                 <CardPicker
-                  selected={board}
+                  value={board}
                   disabledCards={allUsedCards.filter(c => !board.includes(c))}
-                  onSelect={c => toggleCard(c, board, setBoard, 5)}
+                  onChange={cards => setBoard(cards)}
                   maxCards={5}
                 />
               </div>
