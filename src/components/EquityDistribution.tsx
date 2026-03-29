@@ -2,15 +2,15 @@ import React, { memo } from 'react';
 import { bucketColor } from './RangeGrid';
 
 interface Props {
-  equity_equity_buckets: number[];          // 5 values summing to 1
+  equity_buckets: number[];   // 5 values summing to 1 (0-20,20-40,40-60,60-80,80-100%)
   heroAvgEquity: number;      // 0–1
   villainAvgEquity: number;   // 0–1
   nutAdvantage: 'hero' | 'villain' | 'neutral';
 }
 
-export const EquityDistribution = memo(({ buckets: equity_buckets, heroAvgEquity, villainAvgEquity, nutAdvantage }: Props) => {
-  if (!buckets?.length) return null;
-  const pcts = buckets.map(b => Math.round(b * 100));
+export const EquityDistribution = memo(({ equity_buckets, heroAvgEquity, villainAvgEquity, nutAdvantage }: Props) => {
+  if (!equity_buckets?.length) return null;
+  const pcts = equity_buckets.map(b => Math.round(b * 100));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -21,7 +21,7 @@ export const EquityDistribution = memo(({ buckets: equity_buckets, heroAvgEquity
       {/* 5-segment stacked bar */}
       <div>
         <div style={{ display: 'flex', height: 14, borderRadius: 3, overflow: 'hidden' }}>
-          {buckets.map((b, i) => (
+          {equity_buckets.map((b, i) => (
             <div
               key={i}
               style={{
@@ -39,7 +39,7 @@ export const EquityDistribution = memo(({ buckets: equity_buckets, heroAvgEquity
             <div
               key={i}
               style={{
-                width: `${buckets[i] * 100}%`,
+                width: `${equity_buckets[i] * 100}%`,
                 textAlign: 'center', fontSize: 9,
                 color: '#6b7280', fontFamily: 'monospace',
                 overflow: 'hidden', minWidth: 0,
