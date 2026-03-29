@@ -149,12 +149,44 @@ fn solve_postflop(
 
     // Build board texture info
     let texture = equity_engine::postflop::BoardTexture::analyze(&board_cards);
+
+    // Check if hero specifically has a flush draw
+    let hero_suit = h1.suit;
+    let hero_suit2 = h2.suit;
+    let board_suit_counts = {
+        let mut counts = [0u8; 4];
+        for c in &board_cards { counts[equity_engine::postflop::suit_idx_pub(c.suit)] += 1; }
+        counts
+    };
+    let hero_flush_draw = hero_suit == hero_suit2 && {
+        let s = equity_engine::postflop::suit_idx_pub(hero_suit);
+        board_suit_counts[s] >= 2  // hero holds 2 of same suit + 2 on board = 4 suited
+    } || hero_suit != hero_suit2 && {
+        let s1 = equity_engine::postflop::suit_idx_pub(hero_suit);
+        let s2 = equity_engine::postflop::suit_idx_pub(hero_suit2);
+        board_suit_counts[s1] >= 2 || board_suit_counts[s2] >= 2
+    };
+
     let texture_label = {
-        let mut parts: Vec<&str> = Vec::new();
-        if texture.is_monotone { parts.push("Monotone"); }
-        else if texture.flush_draw_possible { parts.push("Flush Draw"); }
-        if texture.is_paired { parts.push("Paired"); }
-        if texture.straight_draw_possible { parts.push("Straight Draw"); }
+        let mut parts: Vec<String> = Vec::new();
+        if texture.is_monotone {
+            parts.push("Monotone".to_string());
+        } else if texture.flush_draw_possible {
+            // Show which suit has 2 cards + who has the draw
+            let suit_names = ["♥", "♦", "♣", "♠"];
+            let fd_suit = board_suit_counts.iter().enumerate()
+                .filter(|(_, &c)| c >= 2)
+                .map(|(i, _)| suit_names[i])
+                .next()
+                .unwrap_or("?");
+            if hero_flush_draw {
+                parts.push(format!("FD {} (you have it)", fd_suit));
+            } else {
+                parts.push(format!("FD {} (villain may have)", fd_suit));
+            }
+        }
+        if texture.is_paired { parts.push("Paired".to_string()); }
+        if texture.straight_draw_possible { parts.push("Straight Draw".to_string()); }
         if parts.is_empty() { "Dry".to_string() } else { parts.join(", ") }
     };
 

@@ -69,6 +69,8 @@ impl BoardTexture {
     }
 }
 
+pub fn suit_idx_pub(s: Suit) -> usize { suit_idx(s) }
+
 fn suit_idx(s: Suit) -> usize {
     match s { Suit::Hearts => 0, Suit::Diamonds => 1, Suit::Clubs => 2, Suit::Spades => 3 }
 }
