@@ -170,6 +170,15 @@ fn solve_postflop(
     let pot_odds_rounded = (pot_odds_pct * 10.0).round() / 10.0;
     let spr_rounded = (spr * 10.0).round() / 10.0;
 
+    // Define action_str before debug_steps (used in both)
+    let action_str = match &decision.action {
+        equity_engine::postflop_solver::PostflopAction::Fold    => "FOLD",
+        equity_engine::postflop_solver::PostflopAction::Check   => "CHECK",
+        equity_engine::postflop_solver::PostflopAction::Call    => "CALL",
+        equity_engine::postflop_solver::PostflopAction::Bet(_)  => "BET",
+        equity_engine::postflop_solver::PostflopAction::Raise(_)=> "RAISE",
+    }.to_string();
+
     // Build step-by-step debug explanation
     let mut debug_steps: Vec<String> = vec![
         format!("1. Street: {} (board has {} cards)", match board_cards.len() { 3=>"Flop", 4=>"Turn", _=>"River" }, board_cards.len()),
@@ -270,7 +279,7 @@ fn analyze_range_on_board(
     }
 
     // Build "hero as a range" (single hand at weight 1.0)
-    let hero_range = equity_engine::range::Range {
+    let _hero_range = equity_engine::range::Range {
         combos: vec![(h1, h2, 1.0)],
     };
 
