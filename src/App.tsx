@@ -195,9 +195,9 @@ const App = () => {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                   <BoardDisplay cards={board} />
-                  {result.board_texture !== '—' && (
+                  {result.board_texture && (
                     <span style={{ fontSize: 11, color: '#6b7280', padding: '2px 8px', border: '1px solid #374151', borderRadius: 12 }}>
-                      {result.board_texture}
+                      {result.board_texture.texture_label}
                     </span>
                   )}
                 </div>
