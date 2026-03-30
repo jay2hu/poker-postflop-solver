@@ -139,12 +139,12 @@ describe('store — full solve flow', () => {
     expect(state.betSizes?.options.length).toBeGreaterThan(0);
   }, 3000);
 
-  it('rangeAnalysis.buckets sums to ~1', async () => {
+  it('(rangeAnalysis as any).equity_buckets sums to ~1', async () => {
     const s = useSolverStore.getState();
     s.setHeroHand(['Ah', 'Kd']);
     s.setBoard(['Qh', 'Jc', '2s']);
     await s.solve();
-    const sum = useSolverStore.getState().rangeAnalysis!.buckets.reduce((a, b) => a + b, 0);
+    const sum = useSolverStore.getState().rangeAnalysis!.equity_buckets.reduce((a, b) => a + b, 0);
     expect(sum).toBeCloseTo(1.0, 2);
   }, 3000);
 });

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { RangeEditGrid } from './RangeEditGrid';
-import { rangeMapToString, stringToRangeMap, computeVPIP, totalCombos, loadGtoRange, type ActionType, type RangeMap } from '../lib/rangeUtils';
+import { rangeMapToString, stringToRangeMap, computeVPIP, totalCombos, loadGtoRange, type ActionType } from '../lib/rangeUtils';
 import { useSolverStore } from '../store/solverStore';
 
 const ACTION_TYPES: Array<{ key: ActionType; label: string }> = [
