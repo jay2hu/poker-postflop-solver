@@ -1,5 +1,23 @@
 import { create } from 'zustand';
-import type { PostflopResult } from '../types';
+import type { PostflopResult, SolvedSpot } from '../types';
+
+
+const HISTORY_KEY = 'pps_history_v1';
+
+function loadHistoryFromStorage(): SolvedSpot[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? (JSON.parse(raw) as SolvedSpot[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistoryToStorage(history: SolvedSpot[]) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch { /* storage full — silently ignore */ }
+}
 
 // Detect Tauri environment
 const isTauri = () => typeof window !== 'undefined' && '__TAURI__' in window;
@@ -97,8 +115,12 @@ interface SolverState {
   setToCallBb: (v: number) => void;
   setIsIp: (v: boolean) => void;
   setVillainRange: (v: string) => void;
+  history: SolvedSpot[];
+
   solve: () => Promise<void>;
   reset: () => void;
+  restoreSpot: (spot: SolvedSpot) => void;
+  clearHistory: () => void;
 }
 
 export const useSolverStore = create<SolverState>((set, get) => ({
@@ -113,6 +135,7 @@ export const useSolverStore = create<SolverState>((set, get) => ({
   result: null,
   loading: false,
   error: null,
+  history: loadHistoryFromStorage(),
 
   setHeroHand: (cards) => set({ heroHand: cards }),
   setBoard: (cards) => set({ board: cards }),
@@ -145,10 +168,42 @@ export const useSolverStore = create<SolverState>((set, get) => ({
         await new Promise((r) => setTimeout(r, 600));
         result = mockSolve(params);
       }
-      set({ result, loading: false });
+      set((state) => {
+        const spot: SolvedSpot = {
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+          timestamp: Date.now(),
+          heroHand: s.heroHand,
+          board: s.board,
+          villainRange: s.villainRange,
+          potBb: s.potBb,
+          heroStackBb: s.heroStackBb,
+          isIp: s.isIp,
+          result,
+        };
+        const newHistory = [spot, ...state.history].slice(0, 20);
+        saveHistoryToStorage(newHistory);
+        return { result, loading: false, history: newHistory };
+      });
     } catch (err: unknown) {
       set({ error: String(err), loading: false });
     }
+  },
+
+  restoreSpot: (spot: SolvedSpot) =>
+    set({
+      heroHand: spot.heroHand,
+      board: spot.board,
+      villainRange: spot.villainRange,
+      potBb: spot.potBb,
+      heroStackBb: spot.heroStackBb,
+      isIp: spot.isIp,
+      result: spot.result,
+      error: null,
+    }),
+
+  clearHistory: () => {
+    saveHistoryToStorage([]);
+    set({ history: [] });
   },
 
   reset: () =>

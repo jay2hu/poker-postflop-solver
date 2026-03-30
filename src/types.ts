@@ -15,3 +15,15 @@ export interface PostflopResult {
     texture_label: string;
   };
 }
+
+export interface SolvedSpot {
+  id: string;
+  timestamp: number;
+  heroHand: string[];
+  board: string[];
+  villainRange: string;
+  potBb: number;
+  heroStackBb: number;
+  isIp: boolean;
+  result: PostflopResult;
+}

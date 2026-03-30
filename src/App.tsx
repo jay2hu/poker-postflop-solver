@@ -4,6 +4,7 @@ import { CardPicker } from './components/CardPicker';
 import { RangeSelector } from './components/RangeSelector';
 import { ResultPanel } from './components/ResultPanel';
 import { TitleBar } from './components/TitleBar';
+import { HistoryPanel } from './components/HistoryPanel';
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -171,6 +172,12 @@ function App() {
               {store.error}
             </div>
           )}
+
+          <HistoryPanel
+            history={store.history}
+            onRestore={store.restoreSpot}
+            onClear={store.clearHistory}
+          />
         </div>
 
         {/* Right panel */}
