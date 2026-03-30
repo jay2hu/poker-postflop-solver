@@ -56,12 +56,6 @@ export function computeVPIP(map: RangeMap): number {
 /** Total weighted combos */
 export function totalCombos(map: RangeMap): number {
   let total = 0;
-  const ranks = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
-  ranks.forEach((r1, i) => {
-    ranks.forEach((r2, j) => {
-      if (i <= j) return; // skip — handled below
-    });
-  });
   for (const [hand, freq] of Object.entries(map)) {
     const combos = hand.length === 2 && hand[0] === hand[1] ? 6
       : hand.endsWith('s') ? 4 : 12;

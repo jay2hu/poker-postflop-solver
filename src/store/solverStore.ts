@@ -7,7 +7,7 @@ const IS_TAURI = '__TAURI_INTERNALS__' in window;
 
 // ── Mock generators ───────────────────────────────────────────────────────────
 
-function mockSolve(potBb: number, heroStackBb: number, toCallBb: number, board: string[], villainRange = 'top15%'): PostflopResult {
+function mockSolve(potBb: number, heroStackBb: number, toCallBb: number, board: string[]): PostflopResult {
   const equity = 0.5 + (board.length * 0.032) % 0.3;
   const spr    = heroStackBb / Math.max(potBb, 1);
   const potOdds = toCallBb > 0 ? toCallBb / (potBb + toCallBb) : 0;
@@ -25,19 +25,7 @@ function mockSolve(potBb: number, heroStackBb: number, toCallBb: number, board: 
       : action === 'call' ? 'Marginal spot — calling is correct given pot odds.'
       : 'Insufficient equity against villain range.',
     board_texture: texture,
-    debug_steps: [
-      `1. Street: ${board.length === 3 ? 'Flop' : board.length === 4 ? 'Turn' : 'River'} (board has ${board.length} cards)`,
-      `2. Position: IP (mock — act last)`,
-      `3. Villain range: "${villainRange}" → ~40 combos after blocking`,
-      `4. Board texture: ${texture} (mock analysis)`,
-      `5. Hero equity vs villain range: ${(equity * 100).toFixed(1)}% (Monte Carlo, 3000 iterations)`,
-      `6. SPR = ${heroStackBb.toFixed(1)} / ${potBb.toFixed(1)} = ${spr.toFixed(1)}`,
-      toCallBb > 0
-        ? `7. Facing bet ${toCallBb}bb — pot_odds = ${(potOdds * 100).toFixed(1)}%`
-        : `7. First to act (to_call=0) — deciding bet/check`,
-      `8. Equity ${(equity * 100).toFixed(1)}%: ${action === 'bet' ? '>65% → BET 65% pot' : action === 'call' ? 'in call range → CALL' : 'insufficient → FOLD'}`,
-      `9. Decision: ${action.toUpperCase()} (EV estimate: mock)`,
-    ],
+
   };
 }
 
@@ -131,7 +119,7 @@ export const useSolverStore = create<Store>((set, get) => ({
         });
       } else {
         await new Promise(r => setTimeout(r, 600));
-        result = mockSolve(potBb, heroStackBb, toCallBb, board, villainRange);
+        result = mockSolve(potBb, heroStackBb, toCallBb, board);
       }
       set({ result, loading: false });
 

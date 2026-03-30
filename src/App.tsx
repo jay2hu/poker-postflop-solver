@@ -34,13 +34,24 @@ const NumInput = ({ label, value, onChange, min = 0, max = 999 }: {
   </div>
 );
 
+
+const IS_TAURI = '__TAURI_INTERNALS__' in window;
+const winAction = async (action: 'minimize' | 'maximize' | 'close') => {
+  if (!IS_TAURI) return;
+  const { getCurrentWindow } = await import('@tauri-apps/api/window');
+  const w = getCurrentWindow();
+  if (action === 'minimize') w.minimize();
+  else if (action === 'maximize') w.toggleMaximize();
+  else w.close();
+};
+
 const App = () => {
   const {
-    heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp, villainRange,
+    heroHand, board, potBb, heroStackBb, villainStackBb, toCallBb, isIp,
     result, loading, error,
     rangeAnalysis, rangeLoading, betSizes, betSizesLoading,
     setHeroHand, setBoard, setPotBb, setHeroStackBb, setVillainStackBb, setToCallBb,
-    setIsIp, setVillainRange, solve, reset,
+    setIsIp, solve, reset,
   } = useSolverStore();
 
   const [showHeroPicker, setShowHeroPicker] = useState(false);
@@ -53,7 +64,7 @@ const App = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0f0f0f', color: '#e5e7eb' }}>
-      <Titlebar />
+      <Titlebar onMin={() => winAction('minimize')} onMax={() => winAction('maximize')} onClose={() => winAction('close')} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Left input panel ── */}
@@ -196,7 +207,7 @@ const App = () => {
                   <BoardDisplay cards={board} />
                   {result.board_texture && (
                     <span style={{ fontSize: 11, color: '#6b7280', padding: '2px 8px', border: '1px solid #374151', borderRadius: 12 }}>
-                      {result.board_texture.texture_label}
+                      {typeof result.board_texture === 'string' ? result.board_texture : (result.board_texture as any).texture_label ?? ''}
                     </span>
                   )}
                 </div>
@@ -221,7 +232,7 @@ const App = () => {
               {/* Action */}
               <div>
                 <SectionLabel>Recommended Action</SectionLabel>
-                <ActionBadge action={result.action} sizingBb={result.sizing_bb} sizingPct={result.sizing_pct_pot} />
+                <ActionBadge action={result.action} sizingBb={result.sizing_bb} sizingPctPot={result.sizing_pct_pot} />
               </div>
 
               {/* Reasoning */}
@@ -233,7 +244,7 @@ const App = () => {
               </div>
 
               {/* Debug steps */}
-              {result.debug_steps && <DebugSteps steps={result.debug_steps} />}
+              {(result as any).debug_steps && <DebugSteps steps={(result as any).debug_steps} />}
 
               {/* Range Analysis */}
               {(rangeAnalysis || rangeLoading) && (
