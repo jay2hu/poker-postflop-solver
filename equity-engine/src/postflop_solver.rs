@@ -89,6 +89,33 @@ pub fn recommend(
 }
 
 // ---------------------------------------------------------------------------
+// Helper: bet or jam based on effective stack
+// ---------------------------------------------------------------------------
+
+/// If size >= 95% of effective stack → treat as all-in jam.
+fn effective_bet_size(desired: f64, eff_stack: f64) -> f64 {
+    desired.min(eff_stack)
+}
+
+fn is_jam(size: f64, eff_stack: f64) -> bool {
+    eff_stack > 0.0 && size >= eff_stack * 0.95
+}
+
+fn bet_reasoning(equity: f64, size: f64, sizing_pct: f64, eff_stack: f64, context: &str) -> String {
+    if is_jam(size, eff_stack) {
+        format!(
+            "Equity {:.1}%{} — all-in {:.1}bb (villain effective stack — jam or fold situation).",
+            equity * 100.0, context, eff_stack
+        )
+    } else {
+        format!(
+            "Equity {:.1}%{} — bet {:.1}bb ({:.0}% pot).",
+            equity * 100.0, context, size, sizing_pct * 100.0
+        )
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Facing a bet
 // ---------------------------------------------------------------------------
 
@@ -127,12 +154,15 @@ fn facing_bet(
         }
     } else if equity > raise_threshold {
         // Raise to 2.5× the bet (capped at eff stack)
-        let raise_size = (to_call_bb * 2.5).min(eff_stack);
+        let raise_size = effective_bet_size(to_call_bb * 2.5, eff_stack);
         let sizing_pct = raise_size / (pot_bb + to_call_bb);
-        let reason = format!(
-            "Equity {:.1}% well above pot odds {:.1}%. Raise to {:.1}bb ({:.0}% pot).",
-            equity * 100.0, pot_odds * 100.0, raise_size, sizing_pct * 100.0
-        );
+        let reason = if is_jam(raise_size, eff_stack) {
+            format!("Equity {:.1}% well above pot odds {:.1}%. All-in {:.1}bb (jam).",
+                equity * 100.0, pot_odds * 100.0, eff_stack)
+        } else {
+            format!("Equity {:.1}% well above pot odds {:.1}%. Raise to {:.1}bb ({:.0}% pot).",
+                equity * 100.0, pot_odds * 100.0, raise_size, sizing_pct * 100.0)
+        };
         let ev = (pot_bb + to_call_bb) * (equity - pot_odds);
         PostflopDecision {
             action: PostflopAction::Raise(raise_size),
@@ -194,16 +224,13 @@ fn first_to_act(
     };
 
     if equity > 0.65 {
-        // Strong hand → value bet
-        let size = (pot_bb * if spr < 3.0 { 1.0 } else { 0.65 }).min(eff_stack);
+        // Strong hand → value bet (or jam if shallow stack)
+        let desired = pot_bb * if spr < 3.0 { 1.0 } else { 0.65 };
+        let size = effective_bet_size(desired, eff_stack);
         let sizing_pct = size / pot_bb;
         let ev = pot_bb * (equity - 0.5) + size * equity;
-        let reason = format!(
-            "Equity {:.1}% — strong hand{}.{}",
-            equity * 100.0,
-            if texture.is_dry() { " on dry board" } else { "" },
-            format!(" Value bet {:.1}bb ({:.0}% pot).", size, sizing_pct * 100.0)
-        );
+        let context = if texture.is_dry() { " on dry board" } else { "" };
+        let reason = bet_reasoning(equity, size, sizing_pct, eff_stack, context);
         PostflopDecision {
             action: PostflopAction::Bet(size),
             sizing_bb: Some(size),
@@ -214,14 +241,12 @@ fn first_to_act(
             reasoning: reason,
         }
     } else if equity > threshold {
-        // Thin value / block bet
-        let size = (pot_bb * bet_pct).min(eff_stack);
+        // Thin value / block bet (or jam if very shallow)
+        let desired = pot_bb * bet_pct;
+        let size = effective_bet_size(desired, eff_stack);
         let sizing_pct = size / pot_bb;
         let ev = pot_bb * (equity - 0.5) + size * equity;
-        let reason = format!(
-            "Equity {:.1}% — thin value/block bet {:.1}bb ({:.0}% pot).",
-            equity * 100.0, size, sizing_pct * 100.0
-        );
+        let reason = bet_reasoning(equity, size, sizing_pct, eff_stack, " — thin value");
         PostflopDecision {
             action: PostflopAction::Bet(size),
             sizing_bb: Some(size),
