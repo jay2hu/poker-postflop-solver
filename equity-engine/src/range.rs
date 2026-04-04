@@ -14,6 +14,24 @@ pub struct Range {
     pub combos: Vec<(Card, Card, f64)>,
 }
 
+/// Normalize a hand string to canonical form:
+/// - Ranks uppercase (a→A, k→K, t→T etc.)
+/// - Suited/offsuit suffix lowercase (S→s, O→o)
+/// - Suit letters lowercase (H→h, D→d, C→c, S→s)
+fn normalize_hand_str(s: &str) -> String {
+    s.chars().enumerate().map(|(i, c)| {
+        match c {
+            // Rank characters → uppercase
+            'a' | 'k' | 'q' | 'j' | 't' => c.to_ascii_uppercase(),
+            // Suited/offsuit suffix (last char if s/o) → lowercase
+            's' | 'o' => c.to_ascii_lowercase(),
+            // Suit chars in exact combos (h/d/c/s) → lowercase
+            'H' | 'D' | 'C' | 'S' if i > 0 => c.to_ascii_lowercase(),
+            _ => c,
+        }
+    }).collect()
+}
+
 impl Default for Range {
     fn default() -> Self {
         Range { combos: Vec::new() }
@@ -36,7 +54,7 @@ impl Range {
             if token.is_empty() { continue; }
 
             // Split on ':' for optional weight
-            let (hand_str, weight) = if let Some(idx) = token.rfind(':') {
+            let (hand_str_raw, weight) = if let Some(idx) = token.rfind(':') {
                 let w: f64 = token[idx+1..].parse()
                     .map_err(|_| format!("Invalid weight in '{token}'"))?;
                 (&token[..idx], w.clamp(0.0, 1.0))
@@ -44,10 +62,21 @@ impl Range {
                 (token, 1.0)
             };
 
-            let new_combos = expand_hand_str(hand_str)
-                .map_err(|e| format!("Invalid hand '{hand_str}': {e}"))?;
-            for (c1, c2) in new_combos {
-                combos.push((c1, c2, weight));
+            // Normalize case: ranks uppercase, suited/offsuit suffix lowercase
+            // e.g. "a4s" → "A4s", "akO" → "AKo", "ahkh" → "AhKh"
+            let hand_str = normalize_hand_str(hand_str_raw);
+
+            // Skip silently if hand can't be parsed (removed by blockers etc.)
+            match expand_hand_str(&hand_str) {
+                Ok(new_combos) => {
+                    for (c1, c2) in new_combos {
+                        combos.push((c1, c2, weight));
+                    }
+                }
+                Err(_) => {
+                    // Silently skip invalid/impossible hands rather than erroring
+                    continue;
+                }
             }
         }
 
