@@ -39,10 +39,10 @@ const IS_TAURI = '__TAURI_INTERNALS__' in window;
 const winAction = async (action: 'minimize' | 'maximize' | 'close') => {
   if (!IS_TAURI) return;
   const { getCurrentWindow } = await import('@tauri-apps/api/window');
-  const w = getCurrentWindow();
-  if (action === 'minimize') w.minimize();
-  else if (action === 'maximize') w.toggleMaximize();
-  else w.close();
+  const w = await getCurrentWindow();
+  if (action === 'minimize') await w.minimize();
+  else if (action === 'maximize') await w.toggleMaximize();
+  else await w.close();
 };
 
 const App = () => {
