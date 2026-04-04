@@ -63,12 +63,12 @@ const App = () => {
 
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0f0f0f', color: '#e5e7eb' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: '#0f0f0f', color: '#e5e7eb', overflow: 'hidden' }}>
       <Titlebar onMin={() => winAction('minimize')} onMax={() => winAction('maximize')} onClose={() => winAction('close')} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Left input panel ── */}
-        <div style={{ width: 340, minWidth: 340, background: '#111', borderRight: '1px solid #1f1f1f', overflowY: 'auto', overflowX: 'hidden', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ width: 340, minWidth: 340, maxWidth: 340, background: '#111', borderRight: '1px solid #1f1f1f', overflowY: 'auto', overflowX: 'hidden', padding: 16, boxSizing: 'border-box' as const, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Hero hand */}
           <div>
@@ -86,7 +86,7 @@ const App = () => {
                   ))
                 : <span style={{ fontSize: 12, color: '#4b5563', fontStyle: 'italic' }}>No cards selected</span>
               }
-              <button onClick={() => setShowHeroPicker(v => !v)} style={{
+              <button onClick={() => { setShowHeroPicker(v => !v); setShowBoardPicker(false); }} style={{
                 padding: '2px 8px', borderRadius: 4, fontSize: 11, cursor: 'pointer',
                 border: '1px solid #374151', background: showHeroPicker ? '#1e3a1e' : 'transparent', color: '#9ca3af',
               }}>+ Pick</button>
@@ -106,7 +106,7 @@ const App = () => {
             <SectionLabel>Board</SectionLabel>
             <BoardDisplay cards={board} />
             <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-              <button onClick={() => setShowBoardPicker(v => !v)} style={{
+              <button onClick={() => { setShowBoardPicker(v => !v); setShowHeroPicker(false); }} style={{
                 padding: '2px 8px', borderRadius: 4, fontSize: 11, cursor: 'pointer',
                 border: '1px solid #374151', background: showBoardPicker ? '#1e3a1e' : 'transparent', color: '#9ca3af',
               }}>+ Pick</button>
@@ -179,7 +179,7 @@ const App = () => {
         </div>
 
         {/* ── Right results panel ── */}
-        <div style={{ flex: 1, padding: 24, overflowY: 'auto', background: '#0f0f0f' }}>
+        <div style={{ flex: 1, padding: 24, overflowY: 'auto', background: '#0f0f0f', minWidth: 0 }}>
           {!result && !loading && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#4b5563', textAlign: 'center' }}>
               <div>

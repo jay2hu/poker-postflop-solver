@@ -74,23 +74,6 @@ export const CardPicker: React.FC<CardPickerProps> = ({
           })
         )}
       </div>
-      {value.length > 0 && (
-        <button
-          onClick={() => onChange([])}
-          style={{
-            marginTop: '6px',
-            fontSize: '11px',
-            color: '#8b949e',
-            background: 'none',
-            border: '1px solid #30363d',
-            borderRadius: '4px',
-            padding: '2px 8px',
-            cursor: 'pointer',
-          }}
-        >
-          Clear
-        </button>
-      )}
     </div>
   );
 };
