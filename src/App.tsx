@@ -68,7 +68,7 @@ const App = () => {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Left input panel ── */}
-        <div style={{ width: 340, background: '#111', borderRight: '1px solid #1f1f1f', overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ width: 340, minWidth: 340, background: '#111', borderRight: '1px solid #1f1f1f', overflowY: 'auto', overflowX: 'hidden', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Hero hand */}
           <div>
@@ -179,7 +179,7 @@ const App = () => {
         </div>
 
         {/* ── Right results panel ── */}
-        <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
+        <div style={{ flex: 1, padding: 24, overflowY: 'auto', background: '#0f0f0f' }}>
           {!result && !loading && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#4b5563', textAlign: 'center' }}>
               <div>
