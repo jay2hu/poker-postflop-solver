@@ -68,7 +68,7 @@ const App = () => {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* ── Left input panel ── */}
-        <div style={{ width: 340, minWidth: 340, maxWidth: 340, background: '#111', borderRight: '1px solid #1f1f1f', overflowY: 'auto', overflowX: 'hidden', padding: 16, boxSizing: 'border-box' as const, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="left-panel" style={{ width: 340, minWidth: 340, maxWidth: 340, background: '#111', borderRight: "1px solid #1f1f1f", overflowY: 'auto', overflowX: 'hidden', padding: 16, boxSizing: 'border-box' as const, display: 'flex', flexDirection: 'column', gap: 16, flexShrink: 0 }}>
 
           {/* Hero hand */}
           <div>

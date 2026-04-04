@@ -116,3 +116,10 @@ code {
 ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
 * { scrollbar-width: thin; scrollbar-color: #374151 transparent; }
+
+/* Hide left panel scrollbar completely — content still scrollable */
+.left-panel::-webkit-scrollbar { display: none; }
+.left-panel { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* Full-height layout */
+html, body, #root { height: 100%; margin: 0; padding: 0; overflow: hidden; }
