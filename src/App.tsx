@@ -7,6 +7,8 @@ import { ActionBadge } from './components/ActionBadge';
 import { VillainRangeBuilder } from './components/VillainRangeBuilder';
 import { BoardDisplay } from './components/BoardDisplay';
 import { useSolverStore } from './store/solverStore';
+import { HandStrength } from './components/HandStrength';
+import { evaluateHandStrength } from './lib/handEvaluator';
 import './index.css';
 import { RangeGrid } from './components/RangeGrid';
 import { EquityDistribution } from './components/EquityDistribution';
@@ -215,6 +217,12 @@ const App = () => {
 
               {/* Equity */}
               <EquityBar equity={result.equity} />
+
+              {/* Hand Strength */}
+              {(() => {
+                const hs = evaluateHandStrength(heroHand, board);
+                return hs ? <HandStrength result={hs} heroHand={heroHand} board={board} /> : null;
+              })()}
 
               {/* SPR + pot odds */}
               <div style={{ display: 'flex', gap: 20 }}>
