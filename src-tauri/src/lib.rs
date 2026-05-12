@@ -420,7 +420,8 @@ fn compare_bet_sizes(
     );
 
     let eff_stack = hero_stack_bb.min(villain_stack_bb);
-    let villain_folding_freq = (1.0 - hero_equity * 1.4).clamp(0.0, 0.85);
+    let spr = if pot_bb > 0.0 { hero_stack_bb.min(villain_stack_bb) / pot_bb } else { 99.0 };
+    let villain_folding_freq = (1.0 - hero_equity * 1.2 - spr * 0.05).max(0.0).min(0.85);
 
     // Bet size options
     let sizes: &[(&str, f64)] = &[

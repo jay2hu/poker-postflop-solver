@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import type { PostflopResult, SolvedSpot } from '../types';
 
+export interface StreetResult {
+  street: 'flop' | 'turn' | 'river';
+  board: string[];     // board at this street
+  result: PostflopResult;
+}
+
 
 const HISTORY_KEY = 'pps_history_v1';
 
@@ -116,8 +122,14 @@ interface SolverState {
   setIsIp: (v: boolean) => void;
   setVillainRange: (v: string) => void;
   history: SolvedSpot[];
+  streetHistory: StreetResult[];   // flop→turn→river progression
+  showContinuationPicker: boolean; // whether turn/river card picker is open
+  continuationBoard: string[];     // board being built for next street
 
   solve: () => Promise<void>;
+  continueToNextStreet: (newCard: string) => Promise<void>;
+  openContinuationPicker: () => void;
+  closeContinuationPicker: () => void;
   reset: () => void;
   restoreSpot: (spot: SolvedSpot) => void;
   clearHistory: () => void;
@@ -136,6 +148,9 @@ export const useSolverStore = create<SolverState>((set, get) => ({
   loading: false,
   error: null,
   history: loadHistoryFromStorage(),
+  streetHistory: [],
+  showContinuationPicker: false,
+  continuationBoard: [],
 
   setHeroHand: (cards) => set({ heroHand: cards }),
   setBoard: (cards) => set({ board: cards }),
@@ -148,7 +163,7 @@ export const useSolverStore = create<SolverState>((set, get) => ({
 
   solve: async () => {
     const s = get();
-    set({ loading: true, error: null, result: null });
+    set({ loading: true, error: null, result: null, streetHistory: [], showContinuationPicker: false });
     const params = {
       hero_hand: s.heroHand,
       board: s.board,
@@ -201,6 +216,49 @@ export const useSolverStore = create<SolverState>((set, get) => ({
       error: null,
     }),
 
+  openContinuationPicker: () => set((state) => ({
+    showContinuationPicker: true,
+    continuationBoard: state.board,
+  })),
+
+  closeContinuationPicker: () => set({ showContinuationPicker: false }),
+
+  continueToNextStreet: async (newCard: string) => {
+    const s = useSolverStore.getState();
+    const newBoard = [...s.board, newCard];
+    set({ loading: true, error: null, showContinuationPicker: false });
+
+    const params = {
+      hero_hand: s.heroHand,
+      board: newBoard,
+      pot_bb: s.potBb,
+      hero_stack_bb: s.heroStackBb,
+      villain_stack_bb: s.villainStackBb,
+      to_call_bb: s.toCallBb,
+      is_ip: s.isIp,
+      villain_range: s.villainRange,
+    };
+    try {
+      let result: PostflopResult;
+      if (isTauri()) {
+        const { invoke } = await import('@tauri-apps/api/core');
+        result = await invoke<PostflopResult>('solve_postflop', params);
+      } else {
+        await new Promise((r) => setTimeout(r, 600));
+        result = mockSolve(params);
+      }
+      const street: StreetResult['street'] = newBoard.length === 4 ? 'turn' : 'river';
+      set((state) => ({
+        board: newBoard,
+        result,
+        loading: false,
+        streetHistory: [...state.streetHistory, { street, board: newBoard, result }],
+      }));
+    } catch (err: unknown) {
+      set({ error: String(err), loading: false });
+    }
+  },
+
   clearHistory: () => {
     saveHistoryToStorage([]);
     set({ history: [] });
@@ -219,5 +277,8 @@ export const useSolverStore = create<SolverState>((set, get) => ({
       result: null,
       loading: false,
       error: null,
+      streetHistory: [],
+      showContinuationPicker: false,
+      continuationBoard: [],
     }),
 }));

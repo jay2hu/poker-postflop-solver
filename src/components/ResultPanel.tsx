@@ -7,9 +7,10 @@ import { BoardDisplay } from './BoardDisplay';
 interface ResultPanelProps {
   result: PostflopResult;
   board: string[];
+  onContinue?: () => void;   // only shown when board is 3 or 4 cards
 }
 
-export const ResultPanel: React.FC<ResultPanelProps> = ({ result, board }) => {
+export const ResultPanel: React.FC<ResultPanelProps> = ({ result, board, onContinue }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
@@ -18,6 +19,20 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, board }) => {
         <div style={{ marginTop: '6px', fontSize: '13px', color: '#58a6ff' }}>
           {result.board_texture.texture_label}
         </div>
+        {onContinue && board.length < 5 && (
+          <button
+            data-testid="continue-to-next-street"
+            onClick={onContinue}
+            style={{
+              marginTop: 8, padding: '5px 14px', borderRadius: 6,
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              border: '1px solid #238636', background: '#0f3d1b',
+              color: '#3fb950',
+            }}
+          >
+            {board.length === 3 ? '+ Turn card →' : '+ River card →'}
+          </button>
+        )}
       </div>
 
       <div>
