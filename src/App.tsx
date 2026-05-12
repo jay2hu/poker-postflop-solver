@@ -5,6 +5,7 @@ import { RangeSelector } from './components/RangeSelector';
 import { ResultPanel } from './components/ResultPanel';
 import { TitleBar } from './components/TitleBar';
 import { HistoryPanel } from './components/HistoryPanel';
+import { StreetProgression } from './components/StreetProgression';
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -29,6 +30,9 @@ const labelStyle: React.CSSProperties = {
 
 function App() {
   const store = useSolverStore();
+  const streetHistory = useSolverStore((s) => s.streetHistory);
+  const showContinuationPicker = useSolverStore((s) => s.showContinuationPicker);
+  const continuationBoard = useSolverStore((s) => s.continuationBoard);
   const canSolve = store.heroHand.length === 2 && store.board.length >= 3;
   const handleTauri = async (action: 'minimize' | 'maximize' | 'close') => {
     try {
@@ -183,7 +187,40 @@ function App() {
         {/* Right panel */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
           {store.result ? (
-            <ResultPanel result={store.result} board={store.board} />
+            <>
+              <StreetProgression streetHistory={streetHistory} />
+              {showContinuationPicker && (
+                <div style={{
+                  background: '#161b22', border: '1px solid #30363d',
+                  borderRadius: 8, padding: '14px', marginBottom: 16,
+                }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#6e7681', marginBottom: 8, textTransform: 'uppercase' }}>
+                    {store.board.length === 3 ? 'Select turn card' : 'Select river card'}
+                  </div>
+                  <CardPicker
+                    value={continuationBoard.slice(store.board.length)}
+                    maxCards={1}
+                    onChange={(cards) => {
+                      if (cards.length === 1) {
+                        store.continueToNextStreet(cards[0]);
+                      }
+                    }}
+                    disabledCards={[...store.heroHand, ...store.board]}
+                  />
+                  <button
+                    onClick={store.closeContinuationPicker}
+                    style={{ marginTop: 8, padding: '4px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer', border: '1px solid #30363d', background: 'transparent', color: '#6e7681' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+              <ResultPanel
+                result={store.result}
+                board={store.board}
+                onContinue={store.board.length < 5 ? store.openContinuationPicker : undefined}
+              />
+            </>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#3d4451', fontSize: '14px' }}>
               {store.loading ? 'Calculating…' : 'Select hero hand + board and press SOLVE'}
