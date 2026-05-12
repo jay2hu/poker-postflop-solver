@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { RangeEditGrid } from './RangeEditGrid';
+import { RangeCompare } from './RangeCompare';
+import type { RangeMap } from '../lib/rangeUtils';
 import { rangeMapToString, stringToRangeMap, computeVPIP, totalCombos, loadGtoRange, type ActionType } from '../lib/rangeUtils';
 import { useSolverStore } from '../store/solverStore';
 
@@ -47,6 +49,8 @@ export const VillainRangeBuilder: React.FC = () => {
   const [gtoError, setGtoError] = useState('');
   const [rangeStr, setRangeStr] = useState(() => rangeMapToString(villainRangeMap));
   const [strEditing, setStrEditing] = useState(false);
+  const [showCompare, setShowCompare] = useState(false);
+  const [gtoSnapshot, setGtoSnapshot] = useState<RangeMap | null>(null);
 
   const handleCellChange = useCallback((hand: string, freq: number) => {
     const next = { ...villainRangeMap, [hand]: freq };
@@ -68,6 +72,7 @@ export const VillainRangeBuilder: React.FC = () => {
       const map = await loadGtoRange(stack, actionType, position);
       setVillainRangeMap(map);
       setRangeStr(rangeMapToString(map));
+      setGtoSnapshot(map);  // save for compare view
       setGtoLoaded(true);
     } catch (e) {
       setGtoError(String(e));
@@ -181,6 +186,20 @@ export const VillainRangeBuilder: React.FC = () => {
                 background: 'transparent', color: '#6b7280', cursor: 'pointer', fontSize: 10,
               }}>Clear all</button>
             )}
+            {gtoSnapshot && (
+              <button
+                onClick={() => setShowCompare(v => !v)}
+                style={{
+                  padding: '3px 10px', borderRadius: 5, border: '1px solid',
+                  fontSize: 10, cursor: 'pointer',
+                  background: showCompare ? 'rgba(59,130,246,0.15)' : 'transparent',
+                  color: showCompare ? '#60a5fa' : '#6b7280',
+                  borderColor: showCompare ? '#3b82f6' : '#374151',
+                }}
+              >
+                ⚖️ {showCompare ? 'Hide' : 'Compare'} vs GTO
+              </button>
+            )}
           </div>
 
           {/* Grid */}
@@ -219,6 +238,14 @@ export const VillainRangeBuilder: React.FC = () => {
             <span style={{ color: '#6b7280' }}>VPIP: <strong style={{ color: '#60a5fa' }}>{vpip.toFixed(1)}%</strong></span>
             <span style={{ color: '#6b7280' }}>Combos: <strong style={{ color: '#e5e7eb' }}>{combos}</strong></span>
           </div>
+
+          {/* Compare view */}
+          {showCompare && gtoSnapshot && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Range Comparison</div>
+              <RangeCompare userRange={villainRangeMap} gtoRange={gtoSnapshot} />
+            </div>
+          )}
         </div>
       )}
     </div>
